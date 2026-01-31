@@ -1,18 +1,20 @@
-\# IBM Hackathon
+\# IBM Hackathon Jan 30 - Feb 1st 2026. 
 
 
 
-This repository contains the project work for the IBM Hackathon.
+This repository contains the project work for the IBM Hackathon. We created a ficticious company called TechNova Solutions, created a list of departments, products, contact guide and instructions to guide our agent on how to decide what department to reach out to for a ticket. If the complaint contains a stack trace, it creates a github issue to this repostiory if not it simply creates a ticket and messages a configured slack channel. 
 
 
 
 ## Team Rag Tag
 
-\- Graba Tasneem
+\- Graba Tasneem (Architect)
 
-\- Adithi M D
+\- Adithi M D (QA Tester)
 
-\- Shaina Munoz
+\- Shaina Munoz (Dev Lead)
+ 
+\- Lavan Kumar Sajjan (Manager)
 
 
 
