@@ -205,24 +205,20 @@ jobs:
           ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} || true
 
   # ===========================================
-  # Deploy to IKS
+  # Deploy to IBM Code Engine (Serverless)
   # ===========================================
   deploy:
     runs-on: ubuntu-latest
     needs: [build-api, build-frontend]
     if: github.event_name != 'pull_request'
-    environment: production
     env:
-      CLUSTER_NAME: technova-iks-cluster
+      CE_PROJECT: technova-project
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Install IBM Cloud CLI
         run: |
           curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
-          ibmcloud plugin install kubernetes-service -f
+          ibmcloud plugin install code-engine -f
           ibmcloud plugin install container-registry -f
 
       - name: Login to IBM Cloud
@@ -230,110 +226,95 @@ jobs:
           ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
           ibmcloud target -g Default
 
-      - name: Check if cluster exists or create one
+      - name: Create or select Code Engine project
         run: |
-          echo "Checking for existing cluster..."
-          if ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} > /dev/null 2>&1; then
-            echo "✅ Cluster '${{ env.CLUSTER_NAME }}' already exists"
-            CLUSTER_STATE=$(ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} --output json | jq -r '.state')
-            echo "Cluster state: $CLUSTER_STATE"
+          echo "Checking for existing Code Engine project..."
+          if ibmcloud ce project get --name ${{ env.CE_PROJECT }} > /dev/null 2>&1; then
+            echo "✅ Project '${{ env.CE_PROJECT }}' exists, selecting it..."
+            ibmcloud ce project select --name ${{ env.CE_PROJECT }}
           else
-            echo "📦 Creating new IKS cluster '${{ env.CLUSTER_NAME }}'..."
-            echo "This may take 20-30 minutes for a free cluster..."
-            ibmcloud ks cluster create classic \
-              --name ${{ env.CLUSTER_NAME }} \
-              --zone dal10 \
-              --flavor free \
-              --workers 1
-            echo "⏳ Waiting for cluster to be ready..."
+            echo "📦 Creating Code Engine project '${{ env.CE_PROJECT }}'..."
+            ibmcloud ce project create --name ${{ env.CE_PROJECT }}
+            ibmcloud ce project select --name ${{ env.CE_PROJECT }}
           fi
 
-      - name: Wait for cluster to be ready
+      - name: Create registry secret for Code Engine
         run: |
-          echo "Waiting for cluster to reach 'normal' state..."
-          for i in {1..60}; do
-            STATE=$(ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} --output json | jq -r '.state')
-            echo "Attempt $i/60: Cluster state is '$STATE'"
-            if [ "$STATE" = "normal" ]; then
-              echo "✅ Cluster is ready!"
-              break
-            fi
-            if [ "$STATE" = "critical" ] || [ "$STATE" = "delete_failed" ]; then
-              echo "❌ Cluster is in '$STATE' state. Exiting."
-              exit 1
-            fi
-            echo "Waiting 60 seconds..."
-            sleep 60
-          done
-          # Final check
-          STATE=$(ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} --output json | jq -r '.state')
-          if [ "$STATE" != "normal" ]; then
-            echo "❌ Cluster did not reach 'normal' state within timeout. Current: $STATE"
-            exit 1
-          fi
+          ibmcloud ce secret create --name icr-secret \
+            --format registry \
+            --server ${{ env.IBM_REGISTRY }} \
+            --username iamapikey \
+            --password ${{ secrets.IBM_API_KEY }} \
+            --email noreply@ibm.com || \
+          ibmcloud ce secret update --name icr-secret \
+            --format registry \
+            --server ${{ env.IBM_REGISTRY }} \
+            --username iamapikey \
+            --password ${{ secrets.IBM_API_KEY }} \
+            --email noreply@ibm.com
 
-      - name: Configure kubectl
+      - name: Deploy API to Code Engine
         run: |
-          ibmcloud ks cluster config --cluster ${{ env.CLUSTER_NAME }}
-          kubectl version --client
-          kubectl get nodes
+          echo "🚀 Deploying API..."
+          ibmcloud ce application create --name technova-api \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
+            --registry-secret icr-secret \
+            --port 8000 \
+            --min-scale 1 \
+            --max-scale 3 \
+            --cpu 0.5 \
+            --memory 1G \
+            --env SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
+            --env SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }} \
+            --env SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }} \
+            --env SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
+            --env SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
+            --env GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
+            --env GITHUB_DEFAULT_REPO=${{ github.repository }} || \
+          ibmcloud ce application update --name technova-api \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
+            --env SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
+            --env SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }} \
+            --env SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }} \
+            --env SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
+            --env SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
+            --env GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
+            --env GITHUB_DEFAULT_REPO=${{ github.repository }}
 
-      - name: Create image pull secret
+      - name: Deploy Frontend to Code Engine
         run: |
-          kubectl create secret docker-registry icr-io-secret \
-            --docker-server=${{ env.IBM_REGISTRY }} \
-            --docker-username=iamapikey \
-            --docker-password=${{ secrets.IBM_API_KEY }} \
-            --docker-email=noreply@ibm.com \
-            --dry-run=client -o yaml | kubectl apply -f -
+          # Get the API URL first
+          API_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
+          echo "API URL: $API_URL"
+          
+          echo "🚀 Deploying Frontend..."
+          ibmcloud ce application create --name technova-frontend \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} \
+            --registry-secret icr-secret \
+            --port 80 \
+            --min-scale 1 \
+            --max-scale 3 \
+            --cpu 0.25 \
+            --memory 512M || \
+          ibmcloud ce application update --name technova-frontend \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
 
-      - name: Create API secrets
+      - name: Get deployment URLs
         run: |
-          kubectl create secret generic technova-api-secrets \
-            --from-literal=SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
-            --from-literal=SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }} \
-            --from-literal=SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }} \
-            --from-literal=SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
-            --from-literal=SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
-            --from-literal=GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
-            --from-literal=GITHUB_DEFAULT_REPO=${{ github.repository }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-
-      - name: Update image tags in manifests
-        run: |
-          sed -i "s|icr.io/technovasolutions/technova-support-api:latest|${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}|g" k8s/api-deployment.yaml
-          sed -i "s|icr.io/technovasolutions/technova-frontend:latest|${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}|g" k8s/frontend-deployment.yaml
-
-      - name: Deploy API to IKS
-        run: |
-          kubectl apply -f k8s/api-deployment.yaml
-          kubectl rollout status deployment/technova-api --timeout=300s
-
-      - name: Deploy Frontend to IKS
-        run: |
-          kubectl apply -f k8s/frontend-deployment.yaml
-          kubectl rollout status deployment/technova-frontend --timeout=300s
-
-      - name: Get deployment status
-        run: |
-          echo "=== Deployments ==="
-          kubectl get deployments -l "app in (technova-api, technova-frontend)"
           echo ""
-          echo "=== Services ==="
-          kubectl get services -l "app in (technova-api, technova-frontend)"
+          echo "=============================================="
+          echo "🎉 Deployment Complete!"
+          echo "=============================================="
           echo ""
-          echo "=== Pods ==="
-          kubectl get pods -l "app in (technova-api, technova-frontend)"
+          API_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
+          FRONTEND_URL=$(ibmcloud ce application get --name technova-frontend --output json | jq -r '.status.url')
+          echo "🔗 API URL: $API_URL"
+          echo "🔗 API Docs: $API_URL/docs"
+          echo "🔗 API OpenAPI: $API_URL/openapi.json"
           echo ""
-          echo "=== Frontend External IP ==="
-          echo "Waiting for LoadBalancer IP assignment..."
-          for i in {1..10}; do
-            IP=$(kubectl get svc technova-frontend-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
-            if [ -n "$IP" ]; then
-              echo "🌐 Frontend URL: http://$IP"
-              break
-            fi
-            echo "Attempt $i/10: IP not yet assigned, waiting 30s..."
-            sleep 30
-          done
-          kubectl get svc technova-frontend-service
+          echo "🌐 Frontend URL: $FRONTEND_URL"
+          echo ""
+          echo "=============================================="
+          echo "Connect your watsonx Orchestrate agent to:"
+          echo "$API_URL/openapi.json"
+          echo "=============================================="
