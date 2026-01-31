@@ -1,0 +1,123 @@
+.message {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.message.user {
+  background-color: #1e1e3a;
+}
+
+.message.assistant {
+  background-color: transparent;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  background-color: #6366f1;
+}
+
+.assistant-avatar {
+  background-color: #10b981;
+}
+
+.message-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.message-sender {
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.message-time {
+  color: #6a6a8a;
+  font-size: 12px;
+}
+
+.message-content {
+  color: #d0d0e0;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.message-content p {
+  margin-bottom: 12px;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+
+.message-content li {
+  margin-bottom: 6px;
+}
+
+.message-content code {
+  background-color: #2a2a4a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+}
+
+.message-content pre {
+  background-color: #2a2a4a;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.message-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.message-content a {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.message-content a:hover {
+  text-decoration: underline;
+}
+
+.message-content blockquote {
+  border-left: 4px solid #6366f1;
+  padding-left: 16px;
+  margin: 12px 0;
+  color: #a0a0b0;
+}
