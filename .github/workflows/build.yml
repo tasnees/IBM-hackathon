@@ -9,7 +9,7 @@ on:
 
 env:
   IMAGE_NAME: technova-support-api
-  IBM_REGISTRY: us.icr.io
+  IBM_REGISTRY: icr.io
   IBM_NAMESPACE: ${{ secrets.IBM_NAMESPACE }}
 
 jobs:
