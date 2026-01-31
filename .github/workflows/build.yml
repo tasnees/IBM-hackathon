@@ -232,18 +232,19 @@ jobs:
 
       - name: Create registry secret for Code Engine
         run: |
-          ibmcloud ce secret create --name icr-secret \
-            --format registry \
-            --server ${{ env.IBM_REGISTRY }} \
-            --username iamapikey \
-            --password ${{ secrets.IBM_API_KEY }} \
-            --email noreply@ibm.com || \
-          ibmcloud ce secret update --name icr-secret \
-            --format registry \
-            --server ${{ env.IBM_REGISTRY }} \
-            --username iamapikey \
-            --password ${{ secrets.IBM_API_KEY }} \
-            --email noreply@ibm.com
+      - name: Create or update registry secret for Code Engine
+        run: |
+          if ibmcloud ce secret get --name icr-secret > /dev/null 2>&1; then
+            echo "✅ Registry secret 'icr-secret' already exists, skipping..."
+          else
+            echo "Creating registry secret..."
+            ibmcloud ce secret create --name icr-secret \
+              --format registry \
+              --server ${{ env.IBM_REGISTRY }} \
+              --username iamapikey \
+              --password ${{ secrets.IBM_API_KEY }} \
+              --email noreply@ibm.com
+          fi
 
       - name: Deploy API to Code Engine
         run: |
