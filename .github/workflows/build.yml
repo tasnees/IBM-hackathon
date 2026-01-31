@@ -286,8 +286,8 @@ jobs:
             --port 80 \
             --min-scale 1 \
             --max-scale 3 \
-            --cpu 0.25 \
-            --memory 512M || \
+            --cpu 0.5 \
+            --memory 1G || \
           ibmcloud ce application update --name technova-frontend \
             --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
 
