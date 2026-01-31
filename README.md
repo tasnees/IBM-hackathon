@@ -731,3 +731,9 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/health" -Method Get | ConvertTo-Js
 
 
 
+# See Live Preview
+
+| Service	| URL|
+|------------|----|
+| API	| https://technova-api.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud |
+| Frontend	| https://technova-frontend.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud |

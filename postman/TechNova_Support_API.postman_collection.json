@@ -1,0 +1,453 @@
+{
+  "info": {
+    "_postman_id": "technova-support-api-collection",
+    "name": "TechNova Support API",
+    "description": "API collection for TechNova Support API - Create ServiceNow incidents, send Slack notifications, and create GitHub issues.\n\n## Base URLs\n- **Local Development:** http://localhost:8000\n- **Production:** https://technova-api.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud\n\n## Getting Started\n1. Start the API locally: `python -m uvicorn api.main:app --reload`\n2. Import this collection into Postman\n3. Set the `base_url` variable to your target environment\n4. Test the endpoints!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the API is running and healthy."
+          },
+          "response": [
+            {
+              "name": "Healthy Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/health",
+                  "host": ["{{base_url}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"healthy\",\n  \"version\": \"1.0.0\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "OpenAPI Spec",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/openapi.json",
+              "host": ["{{base_url}}"],
+              "path": ["openapi.json"]
+            },
+            "description": "Get the OpenAPI specification for the API. Useful for importing into watsonx Orchestrate or other tools."
+          },
+          "response": []
+        },
+        {
+          "name": "API Documentation (Swagger UI)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/docs",
+              "host": ["{{base_url}}"],
+              "path": ["docs"]
+            },
+            "description": "Interactive API documentation powered by Swagger UI."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Lookup Endpoints",
+      "description": "These endpoints return reference data needed when creating incidents.",
+      "item": [
+        {
+          "name": "List Assignment Groups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/assignment_groups",
+              "host": ["{{base_url}}"],
+              "path": ["assignment_groups"]
+            },
+            "description": "Get a list of available ServiceNow assignment groups. Use these values in the `assignment_group` field when creating an incident."
+          },
+          "response": [
+            {
+              "name": "Assignment Groups Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/assignment_groups",
+                  "host": ["{{base_url}}"],
+                  "path": ["assignment_groups"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"assignment_groups\": [\n    \"IT-Support\",\n    \"Cloud-Infrastructure-Team\",\n    \"Data-Analytics-Team\",\n    \"SEC-Endpoint-Team\",\n    \"SEC-SOC-Team\",\n    \"FIN-Payments-Team\",\n    \"DEV-Platform-Team\",\n    \"ITSM-ServiceDesk\",\n    \"ERP-Support-Team\",\n    \"Collaboration-Team\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories"]
+            },
+            "description": "Get a list of available incident categories. Use these values in the `incident_category` field when creating an incident."
+          },
+          "response": [
+            {
+              "name": "Categories Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/categories",
+                  "host": ["{{base_url}}"],
+                  "path": ["categories"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"categories\": [\n    \"Access / Login\",\n    \"Performance\",\n    \"Error / Bug\",\n    \"Data Issue\",\n    \"Configuration\",\n    \"Outage\",\n    \"How-To / Question\",\n    \"Enhancement Request\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Impacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/impacts",
+              "host": ["{{base_url}}"],
+              "path": ["impacts"]
+            },
+            "description": "Get a list of available impact values. Use these values in the `impact_value` field when creating an incident.\n\n- **1** = Enterprise (Entire company affected)\n- **2** = Department (Department/business unit affected)\n- **3** = Multiple Users (Several users affected)\n- **4** = Single User (Only one user affected)"
+          },
+          "response": [
+            {
+              "name": "Impacts Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/impacts",
+                  "host": ["{{base_url}}"],
+                  "path": ["impacts"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"impacts\": [\n    {\"value\": \"1\", \"label\": \"1 - Enterprise\"},\n    {\"value\": \"2\", \"label\": \"2 - Department\"},\n    {\"value\": \"3\", \"label\": \"3 - Multiple Users\"},\n    {\"value\": \"4\", \"label\": \"4 - Single User\"}\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Urgencies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/urgencies",
+              "host": ["{{base_url}}"],
+              "path": ["urgencies"]
+            },
+            "description": "Get a list of available urgency values. Use these values in the `urgency_value` field when creating an incident.\n\n- **1** = Critical (Work cannot continue, no workaround)\n- **2** = High (Significant impact, limited workaround)\n- **3** = Medium (Moderate impact, workaround available)\n- **4** = Low (Minor inconvenience, can wait)"
+          },
+          "response": [
+            {
+              "name": "Urgencies Response",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/urgencies",
+                  "host": ["{{base_url}}"],
+                  "path": ["urgencies"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"urgencies\": [\n    {\"value\": \"1\", \"label\": \"1 - Critical\"},\n    {\"value\": \"2\", \"label\": \"2 - High\"},\n    {\"value\": \"3\", \"label\": \"3 - Medium\"},\n    {\"value\": \"4\", \"label\": \"4 - Low\"}\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Incident Management",
+      "description": "Endpoints for creating and managing support incidents.",
+      "item": [
+        {
+          "name": "Create Support Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"short_description\": \"Unable to login to NovaPay Gateway\",\n  \"description\": \"Customer john.doe@example.com reported an issue with NovaPay Gateway. Details: Getting a 401 Unauthorized error when attempting to login. This started happening after the recent password reset.\",\n  \"urgency_value\": \"2\",\n  \"impact_value\": \"3\",\n  \"assignment_group\": \"FIN-Payments-Team\",\n  \"incident_category\": \"Access / Login\",\n  \"caller_username\": \"john.doe@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/get_support",
+              "host": ["{{base_url}}"],
+              "path": ["get_support"]
+            },
+            "description": "Create a new support incident in ServiceNow.\n\nThis endpoint:\n1. Creates a new incident in ServiceNow\n2. Sends a notification to the configured Slack channel\n3. Creates a GitHub issue if a stack trace is detected in the description\n\n## Required Fields\n- `short_description` (string): Brief summary of the issue (max 160 chars)\n- `urgency_value` (string): Urgency level (1-4)\n\n## Optional Fields\n- `description` (string): Detailed description of the issue\n- `impact_value` (string): Impact level (1-4)\n- `assignment_group` (string): Team to assign the incident to\n- `incident_category` (string): Category of the incident\n- `caller_username` (string): Username/email of the person reporting"
+          },
+          "response": [
+            {
+              "name": "Successful Incident Creation",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"short_description\": \"Unable to login to NovaPay Gateway\",\n  \"description\": \"Customer john.doe@example.com reported an issue with NovaPay Gateway. Details: Getting a 401 Unauthorized error when attempting to login.\",\n  \"urgency_value\": \"2\",\n  \"impact_value\": \"3\",\n  \"assignment_group\": \"FIN-Payments-Team\",\n  \"incident_category\": \"Access / Login\",\n  \"caller_username\": \"john.doe@example.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/get_support",
+                  "host": ["{{base_url}}"],
+                  "path": ["get_support"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"incident_number\": \"INC0010008\",\n  \"incident_sys_id\": \"a1b2c3d4e5f6g7h8i9j0\",\n  \"slack_message_sent\": true,\n  \"github_issue_created\": false,\n  \"github_issue_url\": null,\n  \"github_issue_number\": null,\n  \"error_details\": null\n}"
+            },
+            {
+              "name": "Incident with GitHub Issue (Stack Trace)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"short_description\": \"Application crash on payment processing\",\n  \"description\": \"Payment processing failed with error:\\n\\nTraceback (most recent call last):\\n  File \\\"/app/payment/processor.py\\\", line 42, in process\\n    result = gateway.charge(amount)\\n  File \\\"/app/payment/gateway.py\\\", line 89, in charge\\n    raise PaymentError(\\\"Invalid card number\\\")\\nPaymentError: Invalid card number\",\n  \"urgency_value\": \"1\",\n  \"impact_value\": \"2\",\n  \"assignment_group\": \"FIN-Payments-Team\",\n  \"incident_category\": \"Error / Bug\",\n  \"caller_username\": \"ops-team@example.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/get_support",
+                  "host": ["{{base_url}}"],
+                  "path": ["get_support"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"incident_number\": \"INC0010009\",\n  \"incident_sys_id\": \"b2c3d4e5f6g7h8i9j0k1\",\n  \"slack_message_sent\": true,\n  \"github_issue_created\": true,\n  \"github_issue_url\": \"https://github.com/tasnees/IBM-hackathon/issues/5\",\n  \"github_issue_number\": 5,\n  \"error_details\": null\n}"
+            },
+            {
+              "name": "ServiceNow Error Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"short_description\": \"Test incident\",\n  \"urgency_value\": \"3\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/get_support",
+                  "host": ["{{base_url}}"],
+                  "path": ["get_support"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": false,\n  \"incident_number\": null,\n  \"incident_sys_id\": null,\n  \"slack_message_sent\": false,\n  \"github_issue_created\": false,\n  \"github_issue_url\": null,\n  \"github_issue_number\": null,\n  \"error_details\": {\n    \"error_code\": \"SERVICENOW_UNEXPECTED_ERROR\",\n    \"error_message\": \"401 Client Error: Unauthorized\",\n    \"service\": \"servicenow\"\n  }\n}"
+            },
+            {
+              "name": "Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"description\": \"Missing required fields\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/get_support",
+                  "host": ["{{base_url}}"],
+                  "path": ["get_support"]
+                }
+              },
+              "status": "Unprocessable Entity",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"detail\": [\n    {\n      \"loc\": [\"body\", \"short_description\"],\n      \"msg\": \"Field required\",\n      \"type\": \"missing\"\n    },\n    {\n      \"loc\": [\"body\", \"urgency_value\"],\n      \"msg\": \"Field required\",\n      \"type\": \"missing\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create High Priority Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"short_description\": \"CRITICAL: Payment Gateway Down\",\n  \"description\": \"The NovaPay Gateway is completely unavailable. All payment processing has stopped. Multiple customers are reporting failed transactions.\\n\\nError: Connection timeout to payment processor\\nAffected services: All payment endpoints\\nStart time: 2026-01-31 01:00 UTC\",\n  \"urgency_value\": \"1\",\n  \"impact_value\": \"1\",\n  \"assignment_group\": \"FIN-Payments-Team\",\n  \"incident_category\": \"Outage\",\n  \"caller_username\": \"noc@technovasolutions.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/get_support",
+              "host": ["{{base_url}}"],
+              "path": ["get_support"]
+            },
+            "description": "Example of creating a high priority (P1) incident for a critical outage."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Incident with Stack Trace (Triggers GitHub Issue)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"short_description\": \"Application crash when processing large files\",\n  \"description\": \"The data pipeline crashes when processing files larger than 1GB.\\n\\nError log:\\nTraceback (most recent call last):\\n  File \\\"/app/pipeline/processor.py\\\", line 156, in process_file\\n    data = load_data(file_path)\\n  File \\\"/app/pipeline/loader.py\\\", line 42, in load_data\\n    return pd.read_csv(path, chunksize=None)\\n  File \\\"/usr/local/lib/python3.11/site-packages/pandas/io/parsers/readers.py\\\", line 912, in read_csv\\n    return _read(filepath_or_buffer, kwds)\\nMemoryError: Unable to allocate 8.00 GiB for an array with shape (1073741824,) and data type float64\",\n  \"urgency_value\": \"2\",\n  \"impact_value\": \"2\",\n  \"assignment_group\": \"Data-Analytics-Team\",\n  \"incident_category\": \"Error / Bug\",\n  \"caller_username\": \"data.engineer@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/get_support",
+              "host": ["{{base_url}}"],
+              "path": ["get_support"]
+            },
+            "description": "Example of creating an incident with a Python stack trace. This will automatically create a GitHub issue because the description contains a stack trace pattern."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Simple Low Priority Incident",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"short_description\": \"Request to update email signature template\",\n  \"description\": \"I would like to request an update to the company email signature template to include my new job title.\",\n  \"urgency_value\": \"4\",\n  \"impact_value\": \"4\",\n  \"assignment_group\": \"IT-Support\",\n  \"incident_category\": \"How-To / Question\",\n  \"caller_username\": \"employee@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/get_support",
+              "host": ["{{base_url}}"],
+              "path": ["get_support"]
+            },
+            "description": "Example of creating a low priority incident for a simple request."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Minimal Incident (Required Fields Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"short_description\": \"Test incident - minimal fields\",\n  \"urgency_value\": \"3\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/get_support",
+              "host": ["{{base_url}}"],
+              "path": ["get_support"]
+            },
+            "description": "Example of creating an incident with only the required fields (short_description and urgency_value)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
