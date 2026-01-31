@@ -66,6 +66,44 @@ jobs:
           docker stop test-container
           docker rm test-container
 
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy and upload SARIF report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Install IBM Cloud CLI
+        if: github.event_name != 'pull_request'
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install container-registry -f
+
+      - name: Trigger IBM Vulnerability Advisor scan
+        if: github.event_name != 'pull_request'
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
+          ibmcloud cr region-set global
+          echo "Waiting for Vulnerability Advisor to scan the image..."
+          sleep 30
+          ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }} || true
+
       - name: Clean up .env file
         if: always()
         run: rm -f .env
