@@ -205,24 +205,17 @@ jobs:
           ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} || true
 
   # ===========================================
-  # Deploy to IKS (only runs if IKS_CLUSTER_NAME is configured)
+  # Deploy to IKS
   # ===========================================
   deploy:
     runs-on: ubuntu-latest
     needs: [build-api, build-frontend]
-    if: github.event_name != 'pull_request' && vars.ENABLE_IKS_DEPLOY == 'true'
+    if: github.event_name != 'pull_request'
     environment: production
+    env:
+      CLUSTER_NAME: technova-iks-cluster
 
     steps:
-      - name: Check cluster configuration
-        run: |
-          if [ -z "${{ secrets.IKS_CLUSTER_NAME }}" ]; then
-            echo "❌ IKS_CLUSTER_NAME secret is not set. Skipping deployment."
-            echo "To enable deployment, add IKS_CLUSTER_NAME to your repository secrets."
-            exit 1
-          fi
-          echo "✅ Cluster configured: ${{ secrets.IKS_CLUSTER_NAME }}"
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -230,11 +223,81 @@ jobs:
         run: |
           curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
           ibmcloud plugin install kubernetes-service -f
+          ibmcloud plugin install container-registry -f
 
-      - name: Login to IBM Cloud and configure kubectl
+      - name: Login to IBM Cloud
         run: |
           ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
-          ibmcloud ks cluster config --cluster ${{ secrets.IKS_CLUSTER_NAME }}
+          ibmcloud target -g Default
+
+      - name: Check if cluster exists or create one
+        run: |
+          echo "Checking for existing cluster..."
+          if ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} > /dev/null 2>&1; then
+            echo "✅ Cluster '${{ env.CLUSTER_NAME }}' already exists"
+            CLUSTER_STATE=$(ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} --output json | jq -r '.state')
+            echo "Cluster state: $CLUSTER_STATE"
+          else
+            echo "📦 Creating new IKS cluster '${{ env.CLUSTER_NAME }}'..."
+            echo "This may take 20-30 minutes for a free cluster..."
+            ibmcloud ks cluster create classic \
+              --name ${{ env.CLUSTER_NAME }} \
+              --zone dal10 \
+              --flavor free \
+              --workers 1
+            echo "⏳ Waiting for cluster to be ready..."
+          fi
+
+      - name: Wait for cluster to be ready
+        run: |
+          echo "Waiting for cluster to reach 'normal' state..."
+          for i in {1..60}; do
+            STATE=$(ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} --output json | jq -r '.state')
+            echo "Attempt $i/60: Cluster state is '$STATE'"
+            if [ "$STATE" = "normal" ]; then
+              echo "✅ Cluster is ready!"
+              break
+            fi
+            if [ "$STATE" = "critical" ] || [ "$STATE" = "delete_failed" ]; then
+              echo "❌ Cluster is in '$STATE' state. Exiting."
+              exit 1
+            fi
+            echo "Waiting 60 seconds..."
+            sleep 60
+          done
+          # Final check
+          STATE=$(ibmcloud ks cluster get --cluster ${{ env.CLUSTER_NAME }} --output json | jq -r '.state')
+          if [ "$STATE" != "normal" ]; then
+            echo "❌ Cluster did not reach 'normal' state within timeout. Current: $STATE"
+            exit 1
+          fi
+
+      - name: Configure kubectl
+        run: |
+          ibmcloud ks cluster config --cluster ${{ env.CLUSTER_NAME }}
+          kubectl version --client
+          kubectl get nodes
+
+      - name: Create image pull secret
+        run: |
+          kubectl create secret docker-registry icr-io-secret \
+            --docker-server=${{ env.IBM_REGISTRY }} \
+            --docker-username=iamapikey \
+            --docker-password=${{ secrets.IBM_API_KEY }} \
+            --docker-email=noreply@ibm.com \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create API secrets
+        run: |
+          kubectl create secret generic technova-api-secrets \
+            --from-literal=SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
+            --from-literal=SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }} \
+            --from-literal=SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }} \
+            --from-literal=SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
+            --from-literal=SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
+            --from-literal=GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
+            --from-literal=GITHUB_DEFAULT_REPO=${{ github.repository }} \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Update image tags in manifests
         run: |
@@ -244,12 +307,12 @@ jobs:
       - name: Deploy API to IKS
         run: |
           kubectl apply -f k8s/api-deployment.yaml
-          kubectl rollout status deployment/technova-api --timeout=120s
+          kubectl rollout status deployment/technova-api --timeout=300s
 
       - name: Deploy Frontend to IKS
         run: |
           kubectl apply -f k8s/frontend-deployment.yaml
-          kubectl rollout status deployment/technova-frontend --timeout=120s
+          kubectl rollout status deployment/technova-frontend --timeout=300s
 
       - name: Get deployment status
         run: |
@@ -263,4 +326,14 @@ jobs:
           kubectl get pods -l "app in (technova-api, technova-frontend)"
           echo ""
           echo "=== Frontend External IP ==="
-          kubectl get svc technova-frontend-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "LoadBalancer IP pending..."
+          echo "Waiting for LoadBalancer IP assignment..."
+          for i in {1..10}; do
+            IP=$(kubectl get svc technova-frontend-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            if [ -n "$IP" ]; then
+              echo "🌐 Frontend URL: http://$IP"
+              break
+            fi
+            echo "Attempt $i/10: IP not yet assigned, waiting 30s..."
+            sleep 30
+          done
+          kubectl get svc technova-frontend-service
