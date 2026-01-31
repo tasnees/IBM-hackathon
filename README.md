@@ -16,6 +16,8 @@ This repository contains the project work for the IBM Hackathon. We created a fi
  
 \- Lavan Kumar Sajjan (Manager)
 
+\-Vanshika Immadi
+
 
 
 # Ficticious Company TechNova Solutions Support API
