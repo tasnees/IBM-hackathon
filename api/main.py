@@ -28,7 +28,13 @@ settings = get_settings()
 app = FastAPI(
     title=settings.api_title,
     version=settings.api_version,
-    description=settings.api_description
+    description=settings.api_description,
+    servers=[
+        {
+            "url": settings.api_server_url,
+            "description": "Production server on IBM Code Engine"
+        }
+    ]
 )
 
 # Add CORS middleware

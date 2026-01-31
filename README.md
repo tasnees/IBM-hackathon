@@ -58,6 +58,7 @@ Set the following environment variables in your `.env` file:
 | `SLACK_DEFAULT_CHANNEL` | Default Slack channel for notifications |
 | `GITHUB_TOKEN` | GitHub Personal Access Token |
 | `GITHUB_DEFAULT_REPO` | Default repository in `owner/repo` format |
+| `API_SERVER_URL` | The public URL of the deployed API (used in OpenAPI spec for watsonx Orchestrate) |
 
 ---
 
@@ -147,6 +148,73 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 
 ---
 
+### IBM Cloud CLI Installation
+
+The IBM Cloud CLI is required for managing Code Engine deployments and other IBM Cloud resources locally.
+
+#### Windows (PowerShell)
+
+```powershell
+iex (New-Object Net.WebClient).DownloadString('https://clis.cloud.ibm.com/install/powershell')
+```
+
+After installation, restart your terminal or refresh the PATH:
+```powershell
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+```
+
+#### macOS / Linux
+
+```bash
+curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+```
+
+Or for macOS with Homebrew:
+```bash
+brew install ibmcloud-cli
+```
+
+#### Install Required Plugins
+
+After installing the CLI, install the Code Engine and Container Registry plugins:
+
+```bash
+ibmcloud plugin install code-engine -f
+ibmcloud plugin install container-registry -f
+```
+
+#### Login and Target
+
+```bash
+# Login with API key
+ibmcloud login --apikey YOUR_API_KEY -r eu-gb
+
+# Target a resource group
+ibmcloud target -g Default
+
+# Select Code Engine project
+ibmcloud ce project select --id YOUR_PROJECT_ID
+```
+
+#### Update Code Engine Application Environment Variables
+
+To manually update environment variables on a deployed application:
+
+```bash
+ibmcloud ce application update --name technova-api \
+  --env SERVICENOW_INSTANCE=dev314739 \
+  --env SERVICENOW_USERNAME=your-username \
+  --env SERVICENOW_PASSWORD='your-password' \
+  --env SLACK_BOT_TOKEN=xoxb-your-token \
+  --env SLACK_DEFAULT_CHANNEL=your-channel \
+  --env GITHUB_TOKEN=ghp_your-token \
+  --env GITHUB_DEFAULT_REPO=owner/repo
+```
+
+> **Note:** For `SERVICENOW_INSTANCE`, use only the instance name (e.g., `dev314739`), not the full URL.
+
+---
+
 ### IBM watsonx Orchestrate Agent
 
 #### Step 1: Access watsonx Orchestrate
@@ -169,19 +237,75 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
    - **Custom skills** - Connect to your own APIs (like this Support API)
    - **OpenAPI imports** - Import API definitions
 
-#### Step 4: Connect to Your Support API
+#### Step 4: Connect to Your Support API (Custom API Tool)
 
-1. Click **Add Skill** → **Import from OpenAPI**
-2. Enter your API's OpenAPI/Swagger URL:
+To add a custom API as a tool in watsonx Orchestrate, you need to create and upload an OpenAPI specification file.
+
+##### Step 4a: Create the OpenAPI JSON File
+
+1. Your FastAPI application automatically generates an OpenAPI spec at `/openapi.json`
+2. Download or fetch the spec from your deployed API:
    ```
-   http://your-api-url:8000/openapi.json
+   https://your-api-url.codeengine.appdomain.cloud/openapi.json
    ```
-3. Select the endpoints you want the agent to use:
-   - `POST /get_support` - Create support incidents
-   - `GET /assignment_groups` - List assignment groups
-   - `GET /categories` - List incident categories
-4. Configure authentication if required
-5. Test the skill connection
+3. **Important:** The OpenAPI spec must include a `servers` field with your API's base URL. If it's missing, add it manually:
+   ```json
+   {
+     "openapi": "3.1.0",
+     "info": { ... },
+     "servers": [
+       {
+         "url": "https://your-api-url.codeengine.appdomain.cloud",
+         "description": "Production server"
+       }
+     ],
+     "paths": { ... }
+   }
+   ```
+4. Save the file as `openapi.json` (a pre-configured version is available in the repo as `openapi-watsonx.json`)
+
+##### Step 4b: Upload the OpenAPI JSON as a Tool
+
+1. In watsonx Orchestrate, go to your agent's configuration
+2. Click **Add Skill** or **Add Tool**
+3. Select **Import from OpenAPI** or **Custom API**
+4. Click **Upload file** and select your `openapi.json` file
+5. Wait for the file to be parsed and validated
+
+##### Step 4c: Select Endpoints for Your Agent
+
+After uploading, you'll see a list of all available endpoints. Select the ones you want your agent to access:
+
+| Endpoint | Method | Description | Recommended |
+|----------|--------|-------------|-------------|
+| `/get_support` | POST | Create support incidents | ✅ Yes |
+| `/assignment_groups` | GET | List ServiceNow assignment groups | ✅ Yes |
+| `/categories` | GET | List incident categories | ✅ Yes |
+| `/impacts` | GET | List impact values | ✅ Yes |
+| `/urgencies` | GET | List urgency values | ✅ Yes |
+| `/health` | GET | Health check endpoint | ❌ Optional |
+
+1. Check the box next to each endpoint you want to enable
+2. Click **Add Selected** or **Import**
+3. The tools will now appear in your agent's skill list
+
+##### Step 4d: Configure Authentication (if required)
+
+If your API requires authentication:
+1. Click on the imported skill/tool
+2. Go to **Authentication** settings
+3. Configure the appropriate auth method (API Key, OAuth, etc.)
+4. Save the configuration
+
+##### Step 4e: Test the Connection
+
+1. Click **Test** on each imported tool
+2. Provide sample input values
+3. Verify the response is correct
+4. If errors occur, check:
+   - The `servers` URL is correct and accessible
+   - Authentication is properly configured
+   - The API is deployed and running
 
 #### Step 5: Train and Deploy
 
@@ -189,7 +313,9 @@ Go to your GitHub repository → **Settings** → **Secrets and variables** → 
 2. Test your agent in the preview chat
 3. When ready, click **Deploy** to make it available
 
-> **Tip:** You can access your API's interactive documentation at `http://your-api-url:8000/docs` to see all available endpoints.
+> **Tip:** You can access your API's interactive documentation at `https://your-api-url/docs` to see all available endpoints and test them manually.
+
+> **Troubleshooting:** If you see "No server found in the OpenAPI definition", ensure your `openapi.json` includes the `servers` array with your API's full URL.
 
 ---
 

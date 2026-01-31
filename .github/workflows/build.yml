@@ -249,6 +249,13 @@ jobs:
       - name: Deploy API to Code Engine
         run: |
           echo "🚀 Deploying API..."
+          
+          # First, try to get the existing API URL (for updates)
+          EXISTING_URL=$(ibmcloud ce application get --name technova-api --output json 2>/dev/null | jq -r '.status.url' || echo "")
+          
+          # For new deployments, we'll use a placeholder and update after
+          API_SERVER_URL="${EXISTING_URL:-https://technova-api.placeholder.codeengine.appdomain.cloud}"
+          
           ibmcloud ce application create --name technova-api \
             --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
             --registry-secret icr-secret \
@@ -263,7 +270,8 @@ jobs:
             --env SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
             --env SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
             --env GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
-            --env GITHUB_DEFAULT_REPO=${{ github.repository }} || \
+            --env GITHUB_DEFAULT_REPO=${{ github.repository }} \
+            --env API_SERVER_URL=$API_SERVER_URL || \
           ibmcloud ce application update --name technova-api \
             --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
             --env SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
@@ -272,7 +280,15 @@ jobs:
             --env SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
             --env SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
             --env GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
-            --env GITHUB_DEFAULT_REPO=${{ github.repository }}
+            --env GITHUB_DEFAULT_REPO=${{ github.repository }} \
+            --env API_SERVER_URL=$API_SERVER_URL
+          
+          # Get the actual API URL after deployment and update if needed
+          ACTUAL_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
+          if [ "$API_SERVER_URL" != "$ACTUAL_URL" ]; then
+            echo "Updating API_SERVER_URL to: $ACTUAL_URL"
+            ibmcloud ce application update --name technova-api --env API_SERVER_URL=$ACTUAL_URL
+          fi
 
       - name: Deploy Frontend to Code Engine
         run: |

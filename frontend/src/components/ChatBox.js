@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import Message from './Message';
 import './ChatBox.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// Use relative path so nginx can proxy to the backend
+// In development, set REACT_APP_API_URL=http://localhost:8000
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 // IBM watsonx Orchestrate Configuration
 const WXO_CONFIG = {
