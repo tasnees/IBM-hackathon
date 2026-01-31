@@ -211,8 +211,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-api, build-frontend]
     if: github.event_name != 'pull_request'
-    env:
-      CE_PROJECT: technova-project
 
     steps:
       - name: Install IBM Cloud CLI
@@ -223,20 +221,14 @@ jobs:
 
       - name: Login to IBM Cloud
         run: |
-          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
+          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r ${{ secrets.CE_REGION }}
           ibmcloud target -g Default
 
-      - name: Create or select Code Engine project
+      - name: Select Code Engine project
         run: |
-          echo "Checking for existing Code Engine project..."
-          if ibmcloud ce project get --name ${{ env.CE_PROJECT }} > /dev/null 2>&1; then
-            echo "✅ Project '${{ env.CE_PROJECT }}' exists, selecting it..."
-            ibmcloud ce project select --name ${{ env.CE_PROJECT }}
-          else
-            echo "📦 Creating Code Engine project '${{ env.CE_PROJECT }}'..."
-            ibmcloud ce project create --name ${{ env.CE_PROJECT }}
-            ibmcloud ce project select --name ${{ env.CE_PROJECT }}
-          fi
+          echo "Selecting Code Engine project..."
+          ibmcloud ce project select --id ${{ secrets.CE_PROJECT_ID }}
+          echo "✅ Project selected"
 
       - name: Create registry secret for Code Engine
         run: |
