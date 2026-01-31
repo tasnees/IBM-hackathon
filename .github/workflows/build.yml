@@ -140,8 +140,17 @@ jobs:
       - name: Test Frontend container starts successfully
         run: |
           docker run -d -p 80:80 --name test-frontend ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
-          sleep 5
-          curl -f http://localhost:80/ || exit 1
+          echo "Waiting for nginx to start..."
+          sleep 10
+          for i in 1 2 3 4 5; do
+            if curl -f http://localhost:80/ > /dev/null 2>&1; then
+              echo "Frontend is healthy!"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
+          curl -f http://localhost:80/ || (docker logs test-frontend && exit 1)
           docker stop test-frontend
           docker rm test-frontend
 
