@@ -382,6 +382,176 @@ Get available urgency values.
 
 Health check endpoint.
 
+---
+
+## IBM Kubernetes Service (IKS) Deployment
+
+This project deploys two separate pods to IKS:
+- **API Pod** - Python FastAPI backend (`technova-support-api`)
+- **Frontend Pod** - React + Nginx frontend (`technova-frontend`)
+
+### Prerequisites
+
+1. **IBM Cloud CLI** installed with the Kubernetes plugin:
+   ```bash
+   # Install IBM Cloud CLI
+   curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+   
+   # Install Kubernetes plugin
+   ibmcloud plugin install kubernetes-service
+   ```
+
+2. **kubectl** installed and configured
+
+3. **IKS cluster** created in IBM Cloud
+
+### Architecture
+
+```
+                    ┌─────────────────────────────────────────────┐
+                    │             IBM Kubernetes Service          │
+                    │                                             │
+    Internet ──────►│  ┌──────────────────┐                      │
+                    │  │   LoadBalancer    │                      │
+                    │  │  (Frontend Svc)   │                      │
+                    │  └────────┬─────────┘                      │
+                    │           │                                 │
+                    │           ▼                                 │
+                    │  ┌──────────────────┐   ┌────────────────┐ │
+                    │  │  Frontend Pod     │   │  Frontend Pod  │ │
+                    │  │  (React + Nginx)  │   │  (Replica)     │ │
+                    │  └────────┬─────────┘   └───────┬────────┘ │
+                    │           │                      │          │
+                    │           └──────────┬───────────┘          │
+                    │                      │ /api/*               │
+                    │                      ▼                      │
+                    │           ┌──────────────────┐              │
+                    │           │  ClusterIP Svc   │              │
+                    │           │  (API Service)   │              │
+                    │           └────────┬─────────┘              │
+                    │                    │                        │
+                    │           ┌────────┴────────┐               │
+                    │           ▼                 ▼               │
+                    │  ┌──────────────┐   ┌──────────────┐        │
+                    │  │   API Pod    │   │   API Pod    │        │
+                    │  │  (FastAPI)   │   │  (Replica)   │        │
+                    │  └──────────────┘   └──────────────┘        │
+                    │                                             │
+                    └─────────────────────────────────────────────┘
+```
+
+### Step 1: Connect to Your IKS Cluster
+
+```bash
+# Login to IBM Cloud
+ibmcloud login
+
+# List available clusters
+ibmcloud ks clusters
+
+# Configure kubectl for your cluster
+ibmcloud ks cluster config --cluster <cluster-name>
+
+# Verify connection
+kubectl get nodes
+```
+
+### Step 2: Create Required Secrets
+
+Create the secrets for API environment variables:
+
+```bash
+kubectl create secret generic technova-api-secrets \
+  --from-literal=SERVICENOW_INSTANCE=<your-instance> \
+  --from-literal=SERVICENOW_USERNAME=<your-username> \
+  --from-literal=SERVICENOW_PASSWORD=<your-password> \
+  --from-literal=SLACK_BOT_TOKEN=<your-slack-token> \
+  --from-literal=SLACK_DEFAULT_CHANNEL=<your-channel> \
+  --from-literal=GITHUB_TOKEN=<your-github-token> \
+  --from-literal=GITHUB_DEFAULT_REPO=<owner/repo>
+```
+
+Create the IBM Container Registry pull secret:
+
+```bash
+kubectl create secret docker-registry icr-io-secret \
+  --docker-server=icr.io \
+  --docker-username=iamapikey \
+  --docker-password=<your-ibm-api-key> \
+  --docker-email=<your-email>
+```
+
+### Step 3: Deploy to IKS
+
+**Option A: Using the deployment script**
+
+```bash
+cd k8s
+chmod +x deploy.sh
+./deploy.sh <cluster-name> default
+```
+
+**Option B: Manual deployment**
+
+```bash
+# Deploy API
+kubectl apply -f k8s/api-deployment.yaml
+
+# Deploy Frontend
+kubectl apply -f k8s/frontend-deployment.yaml
+
+# Check status
+kubectl get deployments
+kubectl get pods
+kubectl get services
+```
+
+### Step 4: Access Your Application
+
+Get the external IP of the frontend LoadBalancer:
+
+```bash
+kubectl get svc technova-frontend-service
+```
+
+Wait for the `EXTERNAL-IP` to be assigned (may take a few minutes), then access your application at:
+```
+http://<EXTERNAL-IP>
+```
+
+### CI/CD Pipeline
+
+The GitHub Actions workflow automatically builds and pushes both images on every push to `python-api` branch:
+
+| Image | Registry Path |
+|-------|---------------|
+| API | `icr.io/technovasolutions/technova-support-api` |
+| Frontend | `icr.io/technovasolutions/technova-frontend` |
+
+To update deployments after a new image is pushed:
+
+```bash
+# Restart deployments to pull latest images
+kubectl rollout restart deployment/technova-api
+kubectl rollout restart deployment/technova-frontend
+
+# Watch the rollout
+kubectl rollout status deployment/technova-api
+kubectl rollout status deployment/technova-frontend
+```
+
+### Kubernetes Files
+
+| File | Description |
+|------|-------------|
+| `k8s/api-deployment.yaml` | API Deployment and Service |
+| `k8s/frontend-deployment.yaml` | Frontend Deployment and LoadBalancer |
+| `k8s/secrets.yaml` | Template for secrets (DO NOT commit real values) |
+| `k8s/ingress.yaml` | Optional Ingress for custom domain |
+| `k8s/deploy.sh` | Deployment helper script |
+
+---
+
 ## API Documentation
 
 Once the service is running, access the interactive API documentation:
@@ -392,14 +562,33 @@ Once the service is running, access the interactive API documentation:
 ## Project Structure
 
 ```
-service_now_slack/
+IBM-hackathon/
 ├── api/
 │   ├── __init__.py
 │   ├── main.py              # FastAPI application
 │   ├── models.py            # Pydantic models
 │   ├── config.py            # Configuration settings
 │   ├── servicenow_client.py # ServiceNow helper functions
-│   └── slack_client.py      # Slack helper functions
+│   ├── slack_client.py      # Slack helper functions
+│   └── github_client.py     # GitHub helper functions
+├── frontend/
+│   ├── src/
+│   │   └── components/
+│   │       └── ChatBox.js   # React chat component
+│   ├── Dockerfile           # Frontend container
+│   ├── nginx.conf           # Nginx configuration
+│   └── package.json
+├── k8s/
+│   ├── api-deployment.yaml      # API K8s deployment
+│   ├── frontend-deployment.yaml # Frontend K8s deployment
+│   ├── secrets.yaml             # Secrets template
+│   ├── ingress.yaml             # Ingress configuration
+│   └── deploy.sh                # Deployment script
+├── .github/
+│   └── workflows/
+│       └── build.yml        # CI/CD pipeline
+├── knowledge-base/          # Agent instructions
+├── Dockerfile               # API container
 ├── .env.example
 ├── requirements.txt
 └── README.md

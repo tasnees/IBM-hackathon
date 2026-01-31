@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: technova-frontend
+  labels:
+    app: technova-frontend
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: technova-frontend
+  template:
+    metadata:
+      labels:
+        app: technova-frontend
+        tier: frontend
+    spec:
+      containers:
+        - name: technova-frontend
+          image: icr.io/technovasolutions/technova-frontend:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      imagePullSecrets:
+        - name: icr-io-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: technova-frontend-service
+  labels:
+    app: technova-frontend
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  selector:
+    app: technova-frontend

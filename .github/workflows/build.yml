@@ -1,4 +1,4 @@
-name: Build and Deploy API
+name: Build and Deploy to IKS
 
 on:
   push:
@@ -8,12 +8,16 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: technova-support-api
   IBM_REGISTRY: icr.io
   IBM_NAMESPACE: ${{ secrets.IBM_NAMESPACE }}
+  API_IMAGE_NAME: technova-support-api
+  FRONTEND_IMAGE_NAME: technova-frontend
 
 jobs:
-  build:
+  # ===========================================
+  # Build API Image
+  # ===========================================
+  build-api:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -50,63 +54,143 @@ jobs:
           username: iamapikey
           password: ${{ secrets.IBM_API_KEY }}
 
-      - name: Build and push Docker image
+      - name: Build and push API Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
 
-      - name: Test container starts successfully
+      - name: Test API container starts successfully
         run: |
-          docker run -d -p 8000:8000 --env-file .env --name test-container ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker run -d -p 8000:8000 --env-file .env --name test-api ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}
           sleep 5
           curl -f http://localhost:8000/health || exit 1
-          docker stop test-container
-          docker rm test-container
+          docker stop test-api
+          docker rm test-api
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy vulnerability scanner on API
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}'
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
-      - name: Run Trivy and upload SARIF report
+      - name: Run Trivy and upload API SARIF report
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }}'
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}'
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-api-results.sarif'
 
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload API Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Install IBM Cloud CLI
-        if: github.event_name != 'pull_request'
-        run: |
-          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
-          ibmcloud plugin install container-registry -f
-
-      - name: Trigger IBM Vulnerability Advisor scan
-        if: github.event_name != 'pull_request'
-        run: |
-          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
-          ibmcloud cr region-set global
-          echo "Waiting for Vulnerability Advisor to scan the image..."
-          sleep 30
-          ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.IMAGE_NAME }}:${{ github.sha }} || true
+          sarif_file: 'trivy-api-results.sarif'
+          category: 'trivy-api'
 
       - name: Clean up .env file
         if: always()
         run: rm -f .env
+
+  # ===========================================
+  # Build Frontend Image
+  # ===========================================
+  build-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to IBM Cloud Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.IBM_REGISTRY }}
+          username: iamapikey
+          password: ${{ secrets.IBM_API_KEY }}
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Test Frontend container starts successfully
+        run: |
+          docker run -d -p 80:80 --name test-frontend ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          sleep 5
+          curl -f http://localhost:80/ || exit 1
+          docker stop test-frontend
+          docker rm test-frontend
+
+      - name: Run Trivy vulnerability scanner on Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy and upload Frontend SARIF report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+
+      - name: Upload Frontend Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'trivy-frontend'
+
+  # ===========================================
+  # Run IBM Vulnerability Advisor
+  # ===========================================
+  vulnerability-scan:
+    runs-on: ubuntu-latest
+    needs: [build-api, build-frontend]
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install container-registry -f
+
+      - name: Run IBM Vulnerability Advisor on both images
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
+          ibmcloud cr region-set global
+          echo "Waiting for Vulnerability Advisor to scan the images..."
+          sleep 30
+          echo "=== API Image Scan ==="
+          ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} || true
+          echo ""
+          echo "=== Frontend Image Scan ==="
+          ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} || true
