@@ -194,3 +194,55 @@ jobs:
           echo ""
           echo "=== Frontend Image Scan ==="
           ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} || true
+
+  # ===========================================
+  # Deploy to IKS
+  # ===========================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-api, build-frontend]
+    if: github.event_name != 'pull_request'
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install kubernetes-service -f
+
+      - name: Login to IBM Cloud and configure kubectl
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
+          ibmcloud ks cluster config --cluster ${{ secrets.IKS_CLUSTER_NAME }}
+
+      - name: Update image tags in manifests
+        run: |
+          sed -i "s|icr.io/technovasolutions/technova-support-api:latest|${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}|g" k8s/api-deployment.yaml
+          sed -i "s|icr.io/technovasolutions/technova-frontend:latest|${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}|g" k8s/frontend-deployment.yaml
+
+      - name: Deploy API to IKS
+        run: |
+          kubectl apply -f k8s/api-deployment.yaml
+          kubectl rollout status deployment/technova-api --timeout=120s
+
+      - name: Deploy Frontend to IKS
+        run: |
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl rollout status deployment/technova-frontend --timeout=120s
+
+      - name: Get deployment status
+        run: |
+          echo "=== Deployments ==="
+          kubectl get deployments -l "app in (technova-api, technova-frontend)"
+          echo ""
+          echo "=== Services ==="
+          kubectl get services -l "app in (technova-api, technova-frontend)"
+          echo ""
+          echo "=== Pods ==="
+          kubectl get pods -l "app in (technova-api, technova-frontend)"
+          echo ""
+          echo "=== Frontend External IP ==="
+          kubectl get svc technova-frontend-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' || echo "LoadBalancer IP pending..."
