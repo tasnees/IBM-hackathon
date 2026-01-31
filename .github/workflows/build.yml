@@ -2,9 +2,9 @@ name: Build and Deploy to IKS
 
 on:
   push:
-    branches: [python-api]
+    branches: [main]
   pull_request:
-    branches: [python-api]
+    branches: [main]
   workflow_dispatch:
 
 env:

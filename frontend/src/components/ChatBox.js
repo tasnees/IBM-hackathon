@@ -1,12 +1,32 @@
+/**
+ * @fileoverview ChatBox component for TechNova Support Portal.
+ * Provides an interactive chat interface for users to report issues
+ * and create ServiceNow incidents through the TechNova Support API.
+ * Also integrates IBM watsonx Orchestrate chat widget.
+ * @author TechNova Solutions
+ * @version 1.0.0
+ */
+
 import React, { useState, useRef, useEffect } from 'react';
 import Message from './Message';
 import './ChatBox.css';
 
-// Use relative path so nginx can proxy to the backend
-// In development, set REACT_APP_API_URL=http://localhost:8000
+/**
+ * API endpoint URL for the TechNova Support API.
+ * Uses environment variable in development, falls back to nginx proxy path.
+ * @constant {string}
+ */
 const API_URL = process.env.REACT_APP_API_URL || '/api';
 
-// IBM watsonx Orchestrate Configuration
+/**
+ * Configuration for IBM watsonx Orchestrate chat widget integration.
+ * @constant {Object}
+ * @property {string} orchestrationID - Unique identifier for the orchestration
+ * @property {string} hostURL - Base URL for watsonx Orchestrate service
+ * @property {string} rootElementID - DOM element ID for widget container
+ * @property {Object} chatOptions - Chat-specific configuration
+ * @property {string} chatOptions.agentId - ID of the AI agent to use
+ */
 const WXO_CONFIG = {
   orchestrationID: "20260130-2119-1725-5086-83dec47ef685_20260130-2119-4901-9095-cc228da9e153",
   hostURL: "https://dl.watson-orchestrate.ibm.com",
@@ -16,6 +36,10 @@ const WXO_CONFIG = {
   }
 };
 
+/**
+ * Welcome message displayed when the chat loads.
+ * @constant {Object}
+ */
 const WELCOME_MESSAGE = {
   id: 'welcome',
   role: 'assistant',
@@ -31,25 +55,61 @@ Just describe your issue and I'll help you create a support ticket!`,
   timestamp: new Date(),
 };
 
+/**
+ * Main chat interface component for the TechNova Support Portal.
+ * 
+ * Features:
+ * - Real-time chat interface with user and assistant messages
+ * - Auto-scrolling to latest messages
+ * - Auto-resizing textarea input
+ * - Loading state with typing indicator
+ * - Integration with TechNova Support API for incident creation
+ * - IBM watsonx Orchestrate chat widget integration
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered ChatBox component
+ * 
+ * @example
+ * // Usage in App.js
+ * <ChatBox />
+ */
 function ChatBox() {
+  /** @type {[Array<Object>, Function]} State for chat messages */
   const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+  /** @type {[string, Function]} State for input text value */
   const [inputValue, setInputValue] = useState('');
+  /** @type {[boolean, Function]} State for loading/sending status */
   const [isLoading, setIsLoading] = useState(false);
+  /** @type {React.RefObject} Ref for auto-scrolling to bottom */
   const messagesEndRef = useRef(null);
+  /** @type {React.RefObject} Ref for textarea auto-resize */
   const textareaRef = useRef(null);
 
+  /**
+   * Scrolls the messages container to the bottom.
+   * Uses smooth scrolling for better UX.
+   */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  /**
+   * Effect hook to auto-scroll when messages change.
+   */
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Load IBM watsonx Orchestrate Chat Widget
+  /**
+   * Effect hook to load IBM watsonx Orchestrate Chat Widget.
+   * Initializes the widget configuration and loads the external script.
+   */
   useEffect(() => {
     window.wxOConfiguration = WXO_CONFIG;
 
+    /**
+     * Dynamically loads the watsonx Orchestrate loader script.
+     */
     const loadWxOScript = () => {
       const script = document.createElement('script');
       script.src = `${WXO_CONFIG.hostURL}/wxochat/wxoLoader.js?embed=true`;
@@ -69,6 +129,12 @@ function ChatBox() {
     };
   }, []);
 
+  /**
+   * Handles changes to the input textarea.
+   * Updates state and auto-resizes the textarea based on content.
+   * 
+   * @param {React.ChangeEvent<HTMLTextAreaElement>} e - The change event
+   */
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
     // Auto-resize textarea
@@ -76,6 +142,12 @@ function ChatBox() {
     e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
   };
 
+  /**
+   * Handles keyboard events on the input textarea.
+   * Submits the message when Enter is pressed (without Shift).
+   * 
+   * @param {React.KeyboardEvent<HTMLTextAreaElement>} e - The keyboard event
+   */
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -83,6 +155,18 @@ function ChatBox() {
     }
   };
 
+  /**
+   * Handles form submission to send a message.
+   * Creates a user message, calls the support API, and displays the response.
+   * 
+   * API Call: POST /api/get_support
+   * - Creates a ServiceNow incident
+   * - Optionally sends Slack notification
+   * - Optionally creates GitHub issue (if stack trace detected)
+   * 
+   * @async
+   * @returns {Promise<void>}
+   */
   const handleSubmit = async () => {
     if (!inputValue.trim() || isLoading) return;
 
