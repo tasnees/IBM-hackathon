@@ -1,0 +1,298 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TechNova Support API",
+    "description": "API for creating ServiceNow incidents and sending Slack notifications",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://technova-api.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud",
+      "description": "Production server on IBM Code Engine"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Health check endpoint.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get_support": {
+      "post": {
+        "summary": "Get Support",
+        "description": "Create a support incident in ServiceNow and send a Slack notification.\n\nThis endpoint:\n1. Creates a new incident in ServiceNow with the provided details\n2. Sends a notification to the configured Slack channel\n3. Returns the incident details and status\n\nArgs:\n    request: SupportRequest containing incident details\n    \nReturns:\n    SupportResponse with incident number and status",
+        "operationId": "get_support_get_support_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SupportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assignment_groups": {
+      "get": {
+        "summary": "List Assignment Groups",
+        "description": "Get available ServiceNow assignment groups.\n\nReturns:\n    list: Available assignment groups",
+        "operationId": "list_assignment_groups_assignment_groups_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "List Categories",
+        "description": "Get available incident categories.\n\nReturns:\n    list: Available incident categories",
+        "operationId": "list_categories_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/impacts": {
+      "get": {
+        "summary": "List Impacts",
+        "description": "Get available impact values.\n\nReturns:\n    list: Available impact values with labels",
+        "operationId": "list_impacts_impacts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/urgencies": {
+      "get": {
+        "summary": "List Urgencies",
+        "description": "Get available urgency values.\n\nReturns:\n    list: Available urgency values with labels",
+        "operationId": "list_urgencies_urgencies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SupportRequest": {
+        "properties": {
+          "assignment_group": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Assignment Group",
+            "description": "The name of the assignment group returned by the tool get_assignment_groups"
+          },
+          "caller_username": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Caller Username",
+            "description": "The caller username is returned by the tool get_system_user"
+          },
+          "description": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Description",
+            "description": "The description for the incident in ServiceNow"
+          },
+          "impact_value": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Impact Value",
+            "description": "The impact_value is returned by the tool get_impacts"
+          },
+          "incident_category": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Incident Category",
+            "description": "The category name, is returned by the tool get_categories"
+          },
+          "short_description": {
+            "type": "string",
+            "title": "Short Description",
+            "description": "A brief summary of the new incident in ServiceNow"
+          },
+          "urgency_value": {
+            "type": "string",
+            "title": "Urgency Value",
+            "description": "The urgency_value is returned by the tool get_urgencies"
+          }
+        },
+        "type": "object",
+        "required": ["short_description", "urgency_value"],
+        "title": "SupportRequest",
+        "description": "Request model for creating a support incident."
+      },
+      "SupportResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "incident_number": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Incident Number"
+          },
+          "incident_sys_id": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Incident Sys Id"
+          },
+          "slack_message_sent": {
+            "type": "boolean",
+            "title": "Slack Message Sent",
+            "default": false
+          },
+          "github_issue_created": {
+            "type": "boolean",
+            "title": "Github Issue Created",
+            "default": false
+          },
+          "github_issue_url": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "null"}
+            ],
+            "title": "Github Issue Url"
+          },
+          "github_issue_number": {
+            "anyOf": [
+              {"type": "integer"},
+              {"type": "null"}
+            ],
+            "title": "Github Issue Number"
+          },
+          "error_details": {
+            "anyOf": [
+              {"additionalProperties": true, "type": "object"},
+              {"type": "null"}
+            ],
+            "title": "Error Details",
+            "description": "A unified wrapper to fetch all details about the error"
+          }
+        },
+        "type": "object",
+        "required": ["success"],
+        "title": "SupportResponse",
+        "description": "Response model for support incident creation."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {"type": "string"},
+                {"type": "integer"}
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: technova-api
+  labels:
+    app: technova-api
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: technova-api
+  template:
+    metadata:
+      labels:
+        app: technova-api
+        tier: backend
+    spec:
+      containers:
+        - name: technova-api
+          image: icr.io/technovasolutions/technova-support-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: technova-api-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      imagePullSecrets:
+        - name: icr-io-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: technova-api-service
+  labels:
+    app: technova-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    app: technova-api

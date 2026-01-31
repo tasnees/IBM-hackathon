@@ -1,0 +1,160 @@
+# TechNova Solutions - Knowledge Base Index
+
+## ServiceNow Incident Support Documentation
+
+Welcome to the TechNova Solutions knowledge base. This documentation supports the ServiceNow incident creation assistant and contains all the information needed to help customers create and manage support incidents.
+
+---
+
+## Table of Contents
+
+### Company Information
+| Document | Description |
+|----------|-------------|
+| [Company Overview](company-overview.md) | About TechNova Solutions, departments, and contact information |
+
+### Product Documentation
+| Document | Description |
+|----------|-------------|
+| [Product Catalog](product-catalog.md) | Complete list of all products with Product IDs organized by department |
+| [How to Find Your Product ID](how-to-find-product-id.md) | Step-by-step guide to identify the correct Product ID for your issue |
+
+### ServiceNow Documentation
+| Document | Description |
+|----------|-------------|
+| [Assignment Groups Directory](servicenow-assignment-groups.md) | Complete directory of ServiceNow assignment groups by department |
+| [Incident Creation Guide](incident-creation-guide.md) | Step-by-step guide to creating a ServiceNow incident |
+
+---
+
+## Quick Start for Copilot Agent
+
+### Conversation Flow
+
+When helping a user create a ServiceNow incident, follow this flow:
+
+```
+1. IDENTIFY THE PRODUCT
+   └── Ask: "What product or application are you having trouble with?"
+   └── Use: product-catalog.md and how-to-find-product-id.md
+   └── Result: Obtain Product ID (e.g., CLOUD-001)
+
+2. UNDERSTAND THE ISSUE
+   └── Ask: "Can you describe the problem you're experiencing?"
+   └── Gather: Error messages, when it started, what changed
+   └── Result: Short description and detailed description
+
+3. ASSESS IMPACT AND URGENCY
+   └── Ask: "How many people are affected by this issue?"
+   └── Ask: "How critical is this to your work?"
+   └── Use: incident-creation-guide.md (Impact/Urgency tables)
+   └── Result: Priority level
+
+4. CONFIRM ASSIGNMENT GROUP
+   └── Use: servicenow-assignment-groups.md
+   └── Map: Product ID → Assignment Group
+   └── Result: Correct team for routing
+
+5. CREATE INCIDENT SUMMARY
+   └── Compile all information
+   └── Present to user for confirmation
+   └── Provide incident details
+```
+
+### Key Data Points to Collect
+
+| Data Point | Required | Source |
+|------------|----------|--------|
+| Product ID | Yes | Product catalog lookup |
+| Short Description | Yes | User input (max 160 chars) |
+| Detailed Description | Yes | User input (template in guide) |
+| Category | Yes | User selection |
+| Impact | Yes | User assessment |
+| Urgency | Yes | User assessment |
+| Attachments | No | User provided |
+| Contact Info | Yes | User profile |
+
+### Product ID Quick Lookup
+
+For fast product identification, use these keywords:
+
+| User Says | Likely Product ID |
+|-----------|-------------------|
+| VM, virtual machine, compute | CLOUD-001 |
+| container, kubernetes, docker, k8s | CLOUD-002 |
+| storage, files, backup | CLOUD-003, CLOUD-004, CLOUD-007 |
+| data warehouse, SQL, queries | DATA-001, DATA-007 |
+| reports, dashboard, BI | DATA-002, DATA-009 |
+| login, password, SSO, access | SEC-003 |
+| VPN, network access | SEC-010 |
+| email, calendar, outlook | COLLAB-003 |
+| teams, chat, messaging | COLLAB-002 |
+| video, meeting, conference | COLLAB-001 |
+| payment, transaction | FIN-001 |
+| git, code, repository | DEV-001 |
+| build, pipeline, CI/CD, deploy | DEV-002 |
+| ticket, help desk, IT support | ITSM-001 |
+| ERP, SAP, enterprise | ERP-001 |
+| HR, employee, payroll | ERP-002, FIN-007 |
+
+---
+
+## Sample Conversations
+
+### Example 1: Clear Product Identification
+
+**User:** "I can't start my virtual machine in NovaSphere"
+
+**Agent Response:**
+- Product identified: **NovaSphere VM (CLOUD-001)**
+- Proceed to gather issue details
+
+### Example 2: Unclear Product
+
+**User:** "The reporting tool isn't working"
+
+**Agent Response:**
+- Multiple possible products: DATA-002, DATA-009, ERP-009
+- Ask: "Are you using NovaBI Studio for business intelligence reports, NovaViz for dashboards, or the ERP reporting module?"
+
+### Example 3: Unknown Product
+
+**User:** "My application keeps crashing"
+
+**Agent Response:**
+- Cannot determine product
+- Ask: "Can you tell me the name of the application? You can usually find it in the title bar or under Help > About in the menu."
+
+---
+
+## Support Escalation
+
+If the Copilot agent cannot resolve the user's needs:
+
+| Scenario | Action |
+|----------|--------|
+| Cannot identify product | Direct to support: 1-800-TECHNOVA |
+| User frustrated or angry | Transfer to live agent |
+| Security incident | Escalate immediately to SEC-SOC-Team |
+| System-wide outage | Direct to NOC: noc@technovasolutions.com |
+
+---
+
+## Document Maintenance
+
+| Document | Last Updated | Owner |
+|----------|--------------|-------|
+| company-overview.md | 2026-01-30 | Corporate Communications |
+| product-catalog.md | 2026-01-30 | Product Management |
+| servicenow-assignment-groups.md | 2026-01-30 | IT Service Management |
+| how-to-find-product-id.md | 2026-01-30 | Customer Success |
+| incident-creation-guide.md | 2026-01-30 | IT Service Management |
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-01-30 | Initial knowledge base creation |
+

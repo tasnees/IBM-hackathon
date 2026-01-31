@@ -1,0 +1,272 @@
+# TechNova Solutions - ServiceNow Incident Creation Guide
+
+## How to Create a ServiceNow Incident
+
+This guide will walk you through the process of creating a ServiceNow incident for TechNova Solutions products.
+
+---
+
+## Before You Begin
+
+Make sure you have the following information ready:
+
+| Required Information | Description | Example |
+|---------------------|-------------|---------|
+| **Product ID** | The ID of the affected product | CLOUD-001, DATA-002, SEC-003 |
+| **Short Description** | Brief summary of the issue (max 160 characters) | "Unable to start virtual machine" |
+| **Detailed Description** | Full description including error messages | See template below |
+| **Impact** | How many users/systems are affected | Single user, Department, Company-wide |
+| **Urgency** | How quickly the issue needs resolution | Low, Medium, High, Critical |
+
+> **Need help finding your Product ID?** See [How to Find Your Product ID](how-to-find-product-id.md)
+
+---
+
+## Step-by-Step Instructions
+
+### Step 1: Access the ServiceNow Portal
+
+1. Open your web browser
+2. Navigate to: **https://technova.service-now.com**
+3. Log in with your TechNova credentials
+   - Username: Your employee ID or email
+   - Password: Your network password
+
+### Step 2: Navigate to Incident Creation
+
+1. From the home page, click **"Create Incident"** in the quick actions panel
+   - OR navigate to: **Self Service** → **Create New Incident**
+
+### Step 3: Fill in Required Fields
+
+#### Configuration Item / Product
+- Enter your **Product ID** (e.g., `CLOUD-001`)
+- The system will auto-populate the product name and assignment group
+
+#### Category
+Select the category that best matches your issue:
+
+| Category | When to Use |
+|----------|-------------|
+| **Access / Login** | Cannot log in, password issues, permission denied |
+| **Performance** | Slow response, timeouts, degraded performance |
+| **Error / Bug** | Application errors, unexpected behavior, crashes |
+| **Data Issue** | Missing data, incorrect data, data corruption |
+| **Configuration** | Settings not working, configuration changes needed |
+| **Outage** | Complete service unavailability |
+| **How-To / Question** | Need guidance or assistance with features |
+| **Enhancement Request** | Request for new features or improvements |
+
+#### Impact
+Select based on how widespread the issue is:
+
+| Impact Level | Description |
+|--------------|-------------|
+| **1 - Enterprise** | Entire company affected |
+| **2 - Department** | Entire department or business unit affected |
+| **3 - Multiple Users** | Several users affected |
+| **4 - Single User** | Only you are affected |
+
+#### Urgency
+Select based on how quickly the issue needs to be resolved:
+
+| Urgency Level | Description |
+|---------------|-------------|
+| **1 - Critical** | Work cannot continue, no workaround available |
+| **2 - High** | Significant impact, limited workaround |
+| **3 - Medium** | Moderate impact, workaround available |
+| **4 - Low** | Minor inconvenience, can wait |
+
+#### Priority (Auto-Calculated)
+The system automatically calculates priority based on Impact + Urgency:
+
+| | Urgency 1 | Urgency 2 | Urgency 3 | Urgency 4 |
+|---|---|---|---|---|
+| **Impact 1** | P1 - Critical | P1 - Critical | P2 - High | P3 - Medium |
+| **Impact 2** | P1 - Critical | P2 - High | P3 - Medium | P4 - Low |
+| **Impact 3** | P2 - High | P3 - Medium | P4 - Low | P5 - Planning |
+| **Impact 4** | P3 - Medium | P4 - Low | P5 - Planning | P5 - Planning |
+
+### Step 4: Provide Descriptions
+
+#### Short Description
+Enter a brief summary (max 160 characters):
+- Be specific and concise
+- Include the product name or feature
+- Describe the symptom, not the cause
+
+**Good Examples:**
+- "NovaSphere VM fails to start with error E-4021"
+- "NovaBI Studio reports timing out after 30 seconds"
+- "Unable to log into NovaIdentity - password reset not working"
+
+**Poor Examples:**
+- "System broken"
+- "Help needed"
+- "Something is wrong"
+
+#### Detailed Description
+Use this template for best results:
+
+```
+**Issue Summary:**
+[Brief description of the problem]
+
+**Steps to Reproduce:**
+1. [First step]
+2. [Second step]
+3. [Third step]
+
+**Expected Behavior:**
+[What should happen]
+
+**Actual Behavior:**
+[What actually happens]
+
+**Error Messages:**
+[Copy any error messages or codes]
+
+**Environment:**
+- Product: [Product Name and ID]
+- Version: [If known]
+- Browser: [If web application]
+- Operating System: [If relevant]
+
+**Workaround:**
+[Describe any temporary solution you've found, or "None"]
+
+**Additional Information:**
+[Any other relevant details]
+```
+
+### Step 5: Attach Supporting Files (Optional but Recommended)
+
+Add attachments that help illustrate the issue:
+- **Screenshots** showing error messages
+- **Log files** from the application
+- **Screen recordings** demonstrating the problem
+- **Configuration files** (remove sensitive data first)
+
+To attach files:
+1. Click **"Add Attachment"** or drag files into the attachment area
+2. Maximum file size: 25 MB per file
+3. Supported formats: PNG, JPG, PDF, TXT, LOG, MP4, ZIP
+
+### Step 6: Review and Submit
+
+1. Review all information for accuracy
+2. Click **"Submit"** to create the incident
+3. Note your **Incident Number** (format: INC0012345)
+4. You will receive a confirmation email
+
+---
+
+## After Submitting
+
+### What Happens Next?
+
+1. **Immediate:** Incident is created and you receive confirmation email
+2. **Within 15 minutes:** Incident is assigned to the appropriate team based on Product ID
+3. **Based on Priority:** 
+   - P1: Response within 15 minutes
+   - P2: Response within 1 hour
+   - P3: Response within 4 hours
+   - P4: Response within 8 hours
+   - P5: Response within 24 hours
+
+### How to Track Your Incident
+
+1. Log into ServiceNow portal
+2. Navigate to **My Incidents**
+3. Click on your incident number to view status and updates
+4. You can add comments or attachments at any time
+
+### Communication
+
+- All updates will be sent to your email
+- You can reply to notification emails to add comments
+- The assigned technician may contact you for additional information
+
+---
+
+## Sample Completed Incident
+
+Here's an example of a well-documented incident:
+
+| Field | Value |
+|-------|-------|
+| **Product ID** | CLOUD-001 |
+| **Category** | Error / Bug |
+| **Impact** | 3 - Multiple Users |
+| **Urgency** | 2 - High |
+| **Short Description** | NovaSphere VM fails to start - Error E-4021: Insufficient resources |
+
+**Detailed Description:**
+```
+**Issue Summary:**
+When attempting to start our production web server VM (vm-prod-web-01), 
+the operation fails with error E-4021.
+
+**Steps to Reproduce:**
+1. Log into NovaSphere console at https://console.novasphere.technovasolutions.com
+2. Navigate to Virtual Machines > vm-prod-web-01
+3. Click "Start" button
+4. Error appears after approximately 30 seconds
+
+**Expected Behavior:**
+VM should start successfully and reach "Running" state within 2 minutes.
+
+**Actual Behavior:**
+VM remains in "Stopped" state. Error E-4021 displayed: 
+"Insufficient resources in availability zone us-east-1a"
+
+**Error Messages:**
+E-4021: InsufficientResourcesException - The requested resources cannot be 
+allocated in the specified availability zone. Please try a different zone 
+or contact support.
+
+**Environment:**
+- Product: NovaSphere VM (CLOUD-001)
+- VM Name: vm-prod-web-01
+- VM ID: vm-abc123def456
+- Region: us-east-1
+- Availability Zone: us-east-1a
+
+**Workaround:**
+Attempted to start in us-east-1b but need production data which is 
+attached to storage in us-east-1a.
+
+**Additional Information:**
+This VM was working normally until yesterday at 3:00 PM. No changes were 
+made to the VM configuration. Three other VMs in our team are experiencing 
+the same issue.
+```
+
+---
+
+## Quick Reference: Product ID to Assignment Group Mapping
+
+When you enter a Product ID, the incident is automatically assigned to the correct team:
+
+| Product ID Pattern | Assigned To |
+|-------------------|-------------|
+| CLOUD-xxx | CLOUD-L1-Support |
+| DATA-xxx | DATA-L1-Support |
+| SEC-xxx | SEC-L1-Support |
+| COLLAB-xxx | COLLAB-L1-Support |
+| FIN-xxx | FIN-L1-Support |
+| DEV-xxx | DEV-L1-Support |
+| ITSM-xxx | ITSM-L1-Support |
+| ERP-xxx | ERP-L1-Support |
+
+---
+
+## Need Help?
+
+If you have questions about creating an incident:
+
+- **Phone:** 1-800-TECHNOVA (1-800-832-4668)
+- **Chat:** https://support.technovasolutions.com/chat
+- **Email:** servicedesk@technovasolutions.com
+- **Walk-up:** IT Service Desk, Building A, Floor 1
+

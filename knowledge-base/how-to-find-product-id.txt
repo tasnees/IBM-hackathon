@@ -1,0 +1,292 @@
+# TechNova Solutions - How to Find Your Product ID
+
+## Overview
+
+To create a ServiceNow incident, you'll need to identify the **Product ID** for the TechNova product you're experiencing issues with. This guide will walk you through multiple ways to find your Product ID.
+
+---
+
+## Method 1: Search by Product Name
+
+If you know the name of the product, use the table below to find common products:
+
+### Quick Reference - Popular Products
+
+| If you're having issues with... | Product ID | Department |
+|--------------------------------|------------|------------|
+| Virtual machines or VMs | CLOUD-001 | Cloud Infrastructure |
+| Kubernetes or containers | CLOUD-002 | Cloud Infrastructure |
+| File storage or backups | CLOUD-007 | Cloud Infrastructure |
+| Data warehouse or SQL queries | DATA-001 | Data & Analytics |
+| Reports or dashboards | DATA-002 | Data & Analytics |
+| Login or password issues | SEC-003 | Cybersecurity |
+| VPN or network access | SEC-010 | Cybersecurity |
+| Video meetings | COLLAB-001 | Collaboration |
+| Team chat or messaging | COLLAB-002 | Collaboration |
+| Email or calendar | COLLAB-003 | Collaboration |
+| Payment processing | FIN-001 | Financial Technology |
+| Git or code repository | DEV-001 | Developer Tools |
+| CI/CD or build pipelines | DEV-002 | Developer Tools |
+| IT help desk | ITSM-001 | IT Service Management |
+| ERP system | ERP-001 | Enterprise Resource Planning |
+| HR system | ERP-002 | Enterprise Resource Planning |
+
+---
+
+## Method 2: Find Product ID in the Application
+
+Most TechNova applications display the Product ID in one of these locations:
+
+### Desktop Applications
+1. Open the TechNova application
+2. Click **Help** → **About** in the menu bar
+3. Look for "Product ID" or "Application ID" in the dialog
+
+### Web Applications
+1. Log into the TechNova web application
+2. Click on your **profile icon** in the top right corner
+3. Select **About** or **System Information**
+4. The Product ID is displayed under "Application Details"
+
+### Mobile Applications
+1. Open the TechNova mobile app
+2. Tap the **hamburger menu** (☰) or **Settings gear** (⚙️)
+3. Scroll to **About** or **App Info**
+4. The Product ID is listed under version information
+
+---
+
+## Method 3: Check Your License or Subscription
+
+Your Product ID can be found in your TechNova license documentation:
+
+1. Log into the **TechNova Customer Portal**: https://portal.technovasolutions.com
+2. Navigate to **My Subscriptions** or **My Licenses**
+3. Each product will show its Product ID in the format: `DEPT-###`
+4. Example: `CLOUD-001`, `DATA-002`, `SEC-005`
+
+---
+
+## Method 4: Use the Product ID Lookup Tool
+
+### Interactive Lookup
+
+Answer the following questions to identify your Product ID:
+
+**Step 1: What category best describes your issue?**
+
+| Category | Go to Step |
+|----------|------------|
+| Cloud services, virtual machines, storage, networking | Step 2A |
+| Data, analytics, reports, dashboards, machine learning | Step 2B |
+| Security, passwords, access, compliance | Step 2C |
+| Communication, email, chat, meetings | Step 2D |
+| Payments, invoices, accounting, payroll | Step 2E |
+| Code, builds, deployments, APIs | Step 2F |
+| IT tickets, assets, service requests | Step 2G |
+| HR, CRM, supply chain, ERP | Step 2H |
+
+---
+
+**Step 2A: Cloud Infrastructure**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Virtual machines / VMs | CLOUD-001 |
+| Containers / Kubernetes | CLOUD-002 |
+| Block storage (SAN, disks) | CLOUD-003 |
+| Object storage (S3-like, buckets) | CLOUD-004 |
+| Content delivery / CDN | CLOUD-005 |
+| Virtual networks / VPC | CLOUD-006 |
+| Backups / disaster recovery | CLOUD-007 |
+| Load balancers | CLOUD-008 |
+| Serverless / Functions | CLOUD-009 |
+| Edge computing / IoT | CLOUD-010 |
+
+---
+
+**Step 2B: Data & Analytics**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Data warehouse | DATA-001 |
+| Business intelligence / BI reports | DATA-002 |
+| ETL / data pipelines | DATA-003 |
+| Machine learning / ML models | DATA-004 |
+| Real-time streaming | DATA-005 |
+| Data lake | DATA-006 |
+| SQL queries on distributed data | DATA-007 |
+| Data catalog / governance | DATA-008 |
+| Dashboards / visualizations | DATA-009 |
+| Predictive analytics / forecasting | DATA-010 |
+
+---
+
+**Step 2C: Cybersecurity**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Endpoint protection / antivirus | SEC-001 |
+| Network intrusion detection | SEC-002 |
+| Identity / access management (IAM) | SEC-003 |
+| Secrets / credentials / vault | SEC-004 |
+| SIEM / security monitoring | SEC-005 |
+| Compliance monitoring | SEC-006 |
+| Firewall | SEC-007 |
+| Vulnerability scanning | SEC-008 |
+| Encryption / key management | SEC-009 |
+| Zero trust / VPN access | SEC-010 |
+
+---
+
+**Step 2D: Collaboration & Productivity**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Video conferencing / meetings | COLLAB-001 |
+| Team chat / messaging | COLLAB-002 |
+| Email / calendar | COLLAB-003 |
+| Document sharing / collaboration | COLLAB-004 |
+| Digital whiteboard | COLLAB-005 |
+| Project management | COLLAB-006 |
+| Knowledge base / wiki | COLLAB-007 |
+| Forms / workflow automation | COLLAB-008 |
+| Intranet portal | COLLAB-009 |
+| Webinars / virtual events | COLLAB-010 |
+
+---
+
+**Step 2E: Financial Technology**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Payment gateway / processing | FIN-001 |
+| Point-of-sale (POS) | FIN-002 |
+| General ledger / accounting | FIN-003 |
+| Invoicing | FIN-004 |
+| Expense reports | FIN-005 |
+| Treasury / cash management | FIN-006 |
+| Payroll | FIN-007 |
+| Tax calculations | FIN-008 |
+| Audit trails | FIN-009 |
+| Fraud detection | FIN-010 |
+
+---
+
+**Step 2F: Developer Tools**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Git / source code repository | DEV-001 |
+| CI/CD / build pipelines | DEV-002 |
+| Container / artifact registry | DEV-003 |
+| Cloud IDE | DEV-004 |
+| Automated testing | DEV-005 |
+| Application monitoring (APM) | DEV-006 |
+| Log management | DEV-007 |
+| Distributed tracing | DEV-008 |
+| API gateway | DEV-009 |
+| Code security scanning | DEV-010 |
+
+---
+
+**Step 2G: IT Service Management**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Service desk / IT tickets | ITSM-001 |
+| IT asset management | ITSM-002 |
+| CMDB / configuration management | ITSM-003 |
+| Change management | ITSM-004 |
+| Incident management | ITSM-005 |
+| Problem management | ITSM-006 |
+| Knowledge management | ITSM-007 |
+| SLA monitoring | ITSM-008 |
+| Service catalog | ITSM-009 |
+| IT automation | ITSM-010 |
+
+---
+
+**Step 2H: Enterprise Resource Planning**
+
+| What are you working with? | Product ID |
+|---------------------------|------------|
+| Core ERP platform | ERP-001 |
+| Human resources (HR) | ERP-002 |
+| Supply chain | ERP-003 |
+| Inventory / warehouse | ERP-004 |
+| CRM / customer management | ERP-005 |
+| Procurement / purchasing | ERP-006 |
+| Manufacturing | ERP-007 |
+| Sales automation | ERP-008 |
+| ERP reporting | ERP-009 |
+| Mobile ERP app | ERP-010 |
+
+---
+
+## Method 5: Contact Support
+
+If you're still unsure which Product ID to use:
+
+1. **Call Support:** 1-800-TECHNOVA (1-800-832-4668)
+   - Say "Product ID lookup" when prompted
+   - A support agent will help identify your product
+
+2. **Chat Support:** https://support.technovasolutions.com/chat
+   - Available 24/7
+   - Describe what you're trying to do, and our agent will provide the Product ID
+
+3. **Email Support:** producthelp@technovasolutions.com
+   - Include a screenshot or description of the application
+   - Response within 2 business hours
+
+---
+
+## Product ID Format Explained
+
+All TechNova Product IDs follow this format:
+
+```
+[DEPARTMENT]-[NUMBER]
+```
+
+| Part | Description | Example |
+|------|-------------|---------|
+| DEPARTMENT | 3-7 letter department code | CLOUD, DATA, SEC, COLLAB, FIN, DEV, ITSM, ERP |
+| NUMBER | 3-digit product number (001-999) | 001, 002, 003... |
+
+**Examples:**
+- `CLOUD-001` = NovaSphere VM (Cloud Infrastructure)
+- `DATA-002` = NovaBI Studio (Data & Analytics)
+- `SEC-003` = NovaIdentity (Cybersecurity)
+
+---
+
+## Next Steps
+
+Once you have your Product ID, you're ready to create a ServiceNow incident:
+
+1. Go to **TechNova ServiceNow Portal**: https://technova.service-now.com
+2. Click **Create Incident**
+3. Enter your **Product ID** in the "Configuration Item" or "Product" field
+4. Describe your issue
+5. Submit the incident
+
+Your incident will be automatically routed to the correct support team based on the Product ID you provided.
+
+---
+
+## Frequently Asked Questions
+
+**Q: What if my product isn't listed?**
+A: Contact our support team at 1-800-TECHNOVA. You may be using a custom or legacy product that requires manual routing.
+
+**Q: Can I use multiple Product IDs in one incident?**
+A: No. If your issue affects multiple products, create separate incidents for each product. This ensures each team can properly address their component.
+
+**Q: What if I enter the wrong Product ID?**
+A: Don't worry! Our support team will reassign the incident to the correct team if needed. However, using the correct Product ID from the start ensures faster resolution.
+
+**Q: I'm not sure if it's a product issue or user error.**
+A: Create the incident anyway! Our support team will help determine the root cause and provide guidance regardless.
+

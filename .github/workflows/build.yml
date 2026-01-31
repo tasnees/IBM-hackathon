@@ -1,0 +1,329 @@
+name: Build and Deploy to IKS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IBM_REGISTRY: icr.io
+  IBM_NAMESPACE: ${{ secrets.IBM_NAMESPACE }}
+  API_IMAGE_NAME: technova-support-api
+  FRONTEND_IMAGE_NAME: technova-frontend
+
+jobs:
+  # ===========================================
+  # Build API Image
+  # ===========================================
+  build-api:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate .env file from secrets
+        run: |
+          cat << EOF > .env
+          # ServiceNow Configuration
+          SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }}
+          SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }}
+          SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }}
+
+          # Slack Configuration
+          SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }}
+
+          # GitHub Configuration
+          GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }}
+          GITHUB_DEFAULT_REPO=${{ github.repository }}
+          EOF
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to IBM Cloud Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.IBM_REGISTRY }}
+          username: iamapikey
+          password: ${{ secrets.IBM_API_KEY }}
+
+      - name: Build and push API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Test API container starts successfully
+        run: |
+          docker run -d -p 8000:8000 --env-file .env --name test-api ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}
+          sleep 5
+          curl -f http://localhost:8000/health || exit 1
+          docker stop test-api
+          docker rm test-api
+
+      - name: Run Trivy vulnerability scanner on API
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy and upload API SARIF report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-api-results.sarif'
+
+      - name: Upload API Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-api-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-api-results.sarif'
+          category: 'trivy-api'
+
+      - name: Clean up .env file
+        if: always()
+        run: rm -f .env
+
+  # ===========================================
+  # Build Frontend Image
+  # ===========================================
+  build-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to IBM Cloud Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.IBM_REGISTRY }}
+          username: iamapikey
+          password: ${{ secrets.IBM_API_KEY }}
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Test Frontend container starts successfully
+        run: |
+          docker run -d -p 80:80 --name test-frontend ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          echo "Waiting for nginx to start..."
+          sleep 10
+          for i in 1 2 3 4 5; do
+            if curl -f http://localhost:80/ > /dev/null 2>&1; then
+              echo "Frontend is healthy!"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 5s..."
+            sleep 5
+          done
+          curl -f http://localhost:80/ || (docker logs test-frontend && exit 1)
+          docker stop test-frontend
+          docker rm test-frontend
+
+      - name: Run Trivy vulnerability scanner on Frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy and upload Frontend SARIF report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+
+      - name: Upload Frontend Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-frontend-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
+          category: 'trivy-frontend'
+
+  # ===========================================
+  # Run IBM Vulnerability Advisor
+  # ===========================================
+  vulnerability-scan:
+    runs-on: ubuntu-latest
+    needs: [build-api, build-frontend]
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install container-registry -f
+
+      - name: Run IBM Vulnerability Advisor on both images
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r us-south
+          ibmcloud cr region-set global
+          echo "Waiting for Vulnerability Advisor to scan the images..."
+          sleep 30
+          echo "=== API Image Scan ==="
+          ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} || true
+          echo ""
+          echo "=== Frontend Image Scan ==="
+          ibmcloud cr va ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} || true
+
+  # ===========================================
+  # Deploy to IBM Code Engine (Serverless)
+  # ===========================================
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-api, build-frontend]
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Install IBM Cloud CLI
+        run: |
+          curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+          ibmcloud plugin install code-engine -f
+          ibmcloud plugin install container-registry -f
+
+      - name: Login to IBM Cloud
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_API_KEY }} -r ${{ secrets.CE_REGION }}
+          ibmcloud target -g Default
+
+      - name: Select Code Engine project
+        run: |
+          echo "Selecting Code Engine project..."
+          ibmcloud ce project select --id ${{ secrets.CE_PROJECT_ID }}
+          echo "✅ Project selected"
+
+      - name: Create registry secret for Code Engine
+        run: |
+      - name: Create or update registry secret for Code Engine
+        run: |
+          if ibmcloud ce secret get --name icr-secret > /dev/null 2>&1; then
+            echo "✅ Registry secret 'icr-secret' already exists, skipping..."
+          else
+            echo "Creating registry secret..."
+            ibmcloud ce secret create --name icr-secret \
+              --format registry \
+              --server ${{ env.IBM_REGISTRY }} \
+              --username iamapikey \
+              --password ${{ secrets.IBM_API_KEY }} \
+              --email noreply@ibm.com
+          fi
+
+      - name: Deploy API to Code Engine
+        run: |
+          echo "🚀 Deploying API..."
+          
+          # First, try to get the existing API URL (for updates)
+          EXISTING_URL=$(ibmcloud ce application get --name technova-api --output json 2>/dev/null | jq -r '.status.url' || echo "")
+          
+          # For new deployments, we'll use a placeholder and update after
+          API_SERVER_URL="${EXISTING_URL:-https://technova-api.placeholder.codeengine.appdomain.cloud}"
+          
+          ibmcloud ce application create --name technova-api \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
+            --registry-secret icr-secret \
+            --port 8000 \
+            --min-scale 1 \
+            --max-scale 3 \
+            --cpu 0.5 \
+            --memory 1G \
+            --env SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
+            --env SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }} \
+            --env SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }} \
+            --env SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
+            --env SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
+            --env GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
+            --env GITHUB_DEFAULT_REPO=${{ github.repository }} \
+            --env API_SERVER_URL=$API_SERVER_URL || \
+          ibmcloud ce application update --name technova-api \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
+            --env SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }} \
+            --env SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }} \
+            --env SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }} \
+            --env SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }} \
+            --env SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }} \
+            --env GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }} \
+            --env GITHUB_DEFAULT_REPO=${{ github.repository }} \
+            --env API_SERVER_URL=$API_SERVER_URL
+          
+          # Get the actual API URL after deployment and update if needed
+          ACTUAL_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
+          if [ "$API_SERVER_URL" != "$ACTUAL_URL" ]; then
+            echo "Updating API_SERVER_URL to: $ACTUAL_URL"
+            ibmcloud ce application update --name technova-api --env API_SERVER_URL=$ACTUAL_URL
+          fi
+
+      - name: Deploy Frontend to Code Engine
+        run: |
+          # Get the API URL first
+          API_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
+          echo "API URL: $API_URL"
+          
+          echo "🚀 Deploying Frontend..."
+          ibmcloud ce application create --name technova-frontend \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }} \
+            --registry-secret icr-secret \
+            --port 80 \
+            --min-scale 1 \
+            --max-scale 3 \
+            --cpu 0.5 \
+            --memory 1G || \
+          ibmcloud ce application update --name technova-frontend \
+            --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Get deployment URLs
+        run: |
+          echo ""
+          echo "=============================================="
+          echo "🎉 Deployment Complete!"
+          echo "=============================================="
+          echo ""
+          API_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
+          FRONTEND_URL=$(ibmcloud ce application get --name technova-frontend --output json | jq -r '.status.url')
+          echo "🔗 API URL: $API_URL"
+          echo "🔗 API Docs: $API_URL/docs"
+          echo "🔗 API OpenAPI: $API_URL/openapi.json"
+          echo ""
+          echo "🌐 Frontend URL: $FRONTEND_URL"
+          echo ""
+          echo "=============================================="
+          echo "Connect your watsonx Orchestrate agent to:"
+          echo "$API_URL/openapi.json"
+          echo "=============================================="

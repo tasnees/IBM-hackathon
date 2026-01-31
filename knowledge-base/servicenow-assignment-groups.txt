@@ -1,0 +1,172 @@
+# TechNova Solutions - ServiceNow Assignment Groups Directory
+
+## Assignment Group Overview
+
+All ServiceNow incidents at TechNova Solutions are routed to the appropriate **Assignment Group** based on the product affected. Use this directory to understand which team will handle your incident.
+
+---
+
+## CLOUD - Cloud Infrastructure Services
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| CLOUD-L1-Support | AGR-CLOUD-001 | All CLOUD products (initial triage) | CLOUD-L2-Engineering |
+| CLOUD-L2-Engineering | AGR-CLOUD-002 | CLOUD-001 to CLOUD-010 (technical issues) | CLOUD-L3-Architecture |
+| CLOUD-L3-Architecture | AGR-CLOUD-003 | Complex infrastructure issues | CLOUD-Leadership |
+| CLOUD-Storage-Team | AGR-CLOUD-004 | CLOUD-003, CLOUD-004, CLOUD-007 | CLOUD-L2-Engineering |
+| CLOUD-Network-Team | AGR-CLOUD-005 | CLOUD-005, CLOUD-006, CLOUD-008 | CLOUD-L2-Engineering |
+| CLOUD-Compute-Team | AGR-CLOUD-006 | CLOUD-001, CLOUD-002, CLOUD-009, CLOUD-010 | CLOUD-L2-Engineering |
+
+### Cloud Team Contacts
+- **Manager:** Sarah Chen (sarah.chen@technovasolutions.com)
+- **On-Call Rotation:** cloud-oncall@technovasolutions.com
+- **Slack Channel:** #cloud-support
+
+---
+
+## DATA - Data & Analytics
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| DATA-L1-Support | AGR-DATA-001 | All DATA products (initial triage) | DATA-L2-Engineering |
+| DATA-L2-Engineering | AGR-DATA-002 | DATA-001 to DATA-010 (technical issues) | DATA-L3-Architecture |
+| DATA-L3-Architecture | AGR-DATA-003 | Complex data platform issues | DATA-Leadership |
+| DATA-Warehouse-Team | AGR-DATA-004 | DATA-001, DATA-006, DATA-007 | DATA-L2-Engineering |
+| DATA-Analytics-Team | AGR-DATA-005 | DATA-002, DATA-009, DATA-010 | DATA-L2-Engineering |
+| DATA-Pipeline-Team | AGR-DATA-006 | DATA-003, DATA-004, DATA-005 | DATA-L2-Engineering |
+| DATA-Governance-Team | AGR-DATA-007 | DATA-008 | DATA-L2-Engineering |
+
+### Data Team Contacts
+- **Manager:** Marcus Johnson (marcus.johnson@technovasolutions.com)
+- **On-Call Rotation:** data-oncall@technovasolutions.com
+- **Slack Channel:** #data-support
+
+---
+
+## SECURITY - Cybersecurity Operations
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| SEC-L1-Support | AGR-SEC-001 | All SEC products (initial triage) | SEC-L2-Engineering |
+| SEC-L2-Engineering | AGR-SEC-002 | SEC-001 to SEC-010 (technical issues) | SEC-L3-Architecture |
+| SEC-L3-Architecture | AGR-SEC-003 | Critical security incidents | SEC-Leadership |
+| SEC-Endpoint-Team | AGR-SEC-004 | SEC-001, SEC-008 | SEC-L2-Engineering |
+| SEC-Network-Team | AGR-SEC-005 | SEC-002, SEC-007, SEC-010 | SEC-L2-Engineering |
+| SEC-Identity-Team | AGR-SEC-006 | SEC-003, SEC-004, SEC-009 | SEC-L2-Engineering |
+| SEC-SOC-Team | AGR-SEC-007 | SEC-005, SEC-006 | SEC-L2-Engineering |
+
+### Security Team Contacts
+- **Manager:** Dr. Aisha Patel (aisha.patel@technovasolutions.com)
+- **Security Operations Center:** soc@technovasolutions.com
+- **On-Call Rotation:** security-oncall@technovasolutions.com
+- **Slack Channel:** #security-incidents
+
+---
+
+## COLLAB - Collaboration & Productivity
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| COLLAB-L1-Support | AGR-COLLAB-001 | All COLLAB products (initial triage) | COLLAB-L2-Engineering |
+| COLLAB-L2-Engineering | AGR-COLLAB-002 | COLLAB-001 to COLLAB-010 (technical issues) | COLLAB-L3-Architecture |
+| COLLAB-L3-Architecture | AGR-COLLAB-003 | Complex collaboration issues | COLLAB-Leadership |
+| COLLAB-Communication-Team | AGR-COLLAB-004 | COLLAB-001, COLLAB-002, COLLAB-003 | COLLAB-L2-Engineering |
+| COLLAB-Productivity-Team | AGR-COLLAB-005 | COLLAB-004, COLLAB-005, COLLAB-006 | COLLAB-L2-Engineering |
+| COLLAB-Portal-Team | AGR-COLLAB-006 | COLLAB-007, COLLAB-008, COLLAB-009, COLLAB-010 | COLLAB-L2-Engineering |
+
+### Collaboration Team Contacts
+- **Manager:** Jennifer Martinez (jennifer.martinez@technovasolutions.com)
+- **On-Call Rotation:** collab-oncall@technovasolutions.com
+- **Slack Channel:** #collab-support
+
+---
+
+## FINTECH - Financial Technology
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| FIN-L1-Support | AGR-FIN-001 | All FIN products (initial triage) | FIN-L2-Engineering |
+| FIN-L2-Engineering | AGR-FIN-002 | FIN-001 to FIN-010 (technical issues) | FIN-L3-Architecture |
+| FIN-L3-Architecture | AGR-FIN-003 | Critical financial system issues | FIN-Leadership |
+| FIN-Payments-Team | AGR-FIN-004 | FIN-001, FIN-002, FIN-010 | FIN-L2-Engineering |
+| FIN-Accounting-Team | AGR-FIN-005 | FIN-003, FIN-004, FIN-005, FIN-008, FIN-009 | FIN-L2-Engineering |
+| FIN-Treasury-Team | AGR-FIN-006 | FIN-006, FIN-007 | FIN-L2-Engineering |
+
+### Financial Technology Team Contacts
+- **Manager:** Robert Kim (robert.kim@technovasolutions.com)
+- **On-Call Rotation:** fintech-oncall@technovasolutions.com
+- **Slack Channel:** #fintech-support
+
+---
+
+## DEVTOOLS - Developer Tools & Platforms
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| DEV-L1-Support | AGR-DEV-001 | All DEV products (initial triage) | DEV-L2-Engineering |
+| DEV-L2-Engineering | AGR-DEV-002 | DEV-001 to DEV-010 (technical issues) | DEV-L3-Architecture |
+| DEV-L3-Architecture | AGR-DEV-003 | Complex platform issues | DEV-Leadership |
+| DEV-SCM-Team | AGR-DEV-004 | DEV-001, DEV-003 | DEV-L2-Engineering |
+| DEV-CICD-Team | AGR-DEV-005 | DEV-002, DEV-004, DEV-005 | DEV-L2-Engineering |
+| DEV-Observability-Team | AGR-DEV-006 | DEV-006, DEV-007, DEV-008 | DEV-L2-Engineering |
+| DEV-API-Team | AGR-DEV-007 | DEV-009, DEV-010 | DEV-L2-Engineering |
+
+### Developer Tools Team Contacts
+- **Manager:** Alex Thompson (alex.thompson@technovasolutions.com)
+- **On-Call Rotation:** devtools-oncall@technovasolutions.com
+- **Slack Channel:** #devtools-support
+
+---
+
+## ITSM - IT Service Management
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| ITSM-L1-Support | AGR-ITSM-001 | All ITSM products (initial triage) | ITSM-L2-Engineering |
+| ITSM-L2-Engineering | AGR-ITSM-002 | ITSM-001 to ITSM-010 (technical issues) | ITSM-L3-Architecture |
+| ITSM-L3-Architecture | AGR-ITSM-003 | Complex ITSM platform issues | ITSM-Leadership |
+| ITSM-ServiceDesk-Team | AGR-ITSM-004 | ITSM-001, ITSM-005, ITSM-006, ITSM-007 | ITSM-L2-Engineering |
+| ITSM-Asset-Team | AGR-ITSM-005 | ITSM-002, ITSM-003 | ITSM-L2-Engineering |
+| ITSM-Process-Team | AGR-ITSM-006 | ITSM-004, ITSM-008, ITSM-009, ITSM-010 | ITSM-L2-Engineering |
+
+### ITSM Team Contacts
+- **Manager:** David Wilson (david.wilson@technovasolutions.com)
+- **On-Call Rotation:** itsm-oncall@technovasolutions.com
+- **Slack Channel:** #itsm-support
+
+---
+
+## ERP - Enterprise Resource Planning
+
+| Assignment Group | Group ID | Products Covered | Escalation Group |
+|------------------|----------|------------------|------------------|
+| ERP-L1-Support | AGR-ERP-001 | All ERP products (initial triage) | ERP-L2-Engineering |
+| ERP-L2-Engineering | AGR-ERP-002 | ERP-001 to ERP-010 (technical issues) | ERP-L3-Architecture |
+| ERP-L3-Architecture | AGR-ERP-003 | Complex ERP platform issues | ERP-Leadership |
+| ERP-Core-Team | AGR-ERP-004 | ERP-001, ERP-009, ERP-010 | ERP-L2-Engineering |
+| ERP-HR-Team | AGR-ERP-005 | ERP-002 | ERP-L2-Engineering |
+| ERP-Supply-Team | AGR-ERP-006 | ERP-003, ERP-004, ERP-006, ERP-007 | ERP-L2-Engineering |
+| ERP-Sales-Team | AGR-ERP-007 | ERP-005, ERP-008 | ERP-L2-Engineering |
+
+### ERP Team Contacts
+- **Manager:** Lisa Anderson (lisa.anderson@technovasolutions.com)
+- **On-Call Rotation:** erp-oncall@technovasolutions.com
+- **Slack Channel:** #erp-support
+
+---
+
+## Critical Incident Escalation Path
+
+For all **Severity 1 (Critical)** incidents affecting production systems:
+
+1. **Initial Assignment:** Respective L1-Support group
+2. **Immediate Escalation:** L2-Engineering (automatic for Sev1)
+3. **15 minutes:** L3-Architecture engaged
+4. **30 minutes:** Department Leadership notified
+5. **60 minutes:** VP of Engineering and CTO briefed
+
+### Emergency Contacts
+- **NOC (Network Operations Center):** noc@technovasolutions.com | 1-800-832-4668 ext. 911
+- **Critical Incident Bridge:** bridge@technovasolutions.com
+- **Executive On-Call:** exec-oncall@technovasolutions.com
+

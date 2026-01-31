@@ -1,0 +1,40 @@
+# TechNova Solutions - Company Overview
+
+## About TechNova Solutions
+
+**TechNova Solutions** is a global enterprise technology company founded in 2008, headquartered in Austin, Texas. We specialize in providing cutting-edge software solutions, cloud infrastructure, and data analytics platforms to Fortune 500 companies worldwide.
+
+### Company Facts
+- **Founded:** 2008
+- **Headquarters:** Austin, TX
+- **Employees:** 12,500+
+- **Global Offices:** 15 countries
+- **Annual Revenue:** $4.2 Billion
+- **Stock Symbol:** TNVA (NASDAQ)
+
+---
+
+## Company Departments
+
+TechNova Solutions is organized into the following core departments:
+
+| Department Code | Department Name | Description |
+|-----------------|-----------------|-------------|
+| CLOUD | Cloud Infrastructure Services | Manages cloud platforms, virtual machines, and infrastructure |
+| DATA | Data & Analytics | Handles data warehousing, BI tools, and analytics platforms |
+| SECURITY | Cybersecurity Operations | Manages security tools, identity management, and compliance |
+| COLLAB | Collaboration & Productivity | Supports communication and productivity applications |
+| FINTECH | Financial Technology | Manages payment processing and financial software |
+| DEVTOOLS | Developer Tools & Platforms | Supports CI/CD pipelines, code repositories, and dev environments |
+| ITSM | IT Service Management | Handles service desk operations and IT asset management |
+| ERP | Enterprise Resource Planning | Manages business process and resource planning systems |
+
+---
+
+## Contact Information
+
+- **General Support:** 1-800-TECHNOVA (1-800-832-4668)
+- **Support Portal:** https://support.technovasolutions.com
+- **ServiceNow Portal:** https://technova.service-now.com
+- **Hours of Operation:** 24/7 for critical issues, 6 AM - 10 PM CT for standard support
+
