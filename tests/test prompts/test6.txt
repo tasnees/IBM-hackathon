@@ -1,0 +1,11 @@
+FinLedger is failing to process end-of-day reconciliation reports. Started happening after this morning's deployment.
+
+Exception in thread "main" java.lang.NullPointerException
+    at com.technova.finledger.Reconciler.process(Reconciler.java:204)
+    at com.technova.finledger.BatchRunner.run(BatchRunner.java:87)
+    at com.technova.finledger.Main.main(Main.java:33)
+Caused by: java.io.IOException: Connection reset by peer
+
+Product ID: FIN-2024
+Username: finance.ops
+Priority: High — end-of-day reports are delayed.
