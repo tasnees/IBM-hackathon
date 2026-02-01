@@ -13,8 +13,6 @@ This repository contains the project work for the IBM Hackathon. We created a fi
 \- Adithi M D (QA Tester)
 
 \- Shaina Munoz (Dev Lead)
- 
-\- Lavan Kumar Sajjan (Manager)
 
 \-Vanshika Immadi
 
@@ -202,7 +200,40 @@ ibmcloud ce project select --id YOUR_PROJECT_ID
 
 #### Update Code Engine Application Environment Variables
 
-To manually update environment variables on a deployed application:
+##### Option 1: Using Secrets (Recommended - Handles Special Characters)
+
+**This is the recommended approach** because it avoids shell escaping issues with special characters like `$`, `@`, `!`, etc.
+
+**Using the deployment script:**
+```powershell
+# PowerShell (Windows)
+cd scripts
+.\deploy-code-engine.ps1 -EnvFile ..\.env
+
+# Bash (Mac/Linux)
+cd scripts
+chmod +x deploy-code-engine.sh
+./deploy-code-engine.sh --env-file ../.env
+```
+
+**Manual secret creation:**
+```bash
+# Create a secret from your .env file (special chars are preserved!)
+ibmcloud ce secret create --name technova-api-secrets --from-env-file .env
+
+# Bind the secret to your application
+ibmcloud ce app update --name technova-api --env-from-secret technova-api-secrets
+
+# Verify the secret was created correctly
+ibmcloud ce secret get --name technova-api-secrets --decode
+```
+
+##### Option 2: Inline Environment Variables (Simple Values Only)
+
+> ⚠️ **Warning:** This method can truncate values containing special characters like `$`. 
+> For example, `jh@Uq6G$LoD8` becomes `jh@Uq6G` because `$LoD8` is interpreted as a shell variable.
+
+Only use this for simple values without special characters:
 
 ```bash
 ibmcloud ce application update --name technova-api \
@@ -748,3 +779,18 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/health" -Method Get | ConvertTo-Js
 - copilot instructions for code generatation
 - prod and nonprod environment handling 
 - hardware and sofware integration for error handling
+
+
+Help! SecureAccess Gateway is failing authentication for all users since this morning.
+
+Error: AUTHENTICATION_FAILED - Invalid token signature
+    at TokenValidator.verify (/opt/secureaccess/lib/auth/validator.js:78:15)
+    at AuthMiddleware.authenticate (/opt/secureaccess/lib/middleware/auth.js:34:22)
+    at Layer.handle [as handle_request] (/opt/secureaccess/node_modules/express/lib/router/layer.js:95:5)
+    at next (/opt/secureaccess/node_modules/express/lib/router/route.js:144:13)
+    at Route.dispatch (/opt/secureaccess/node_modules/express/lib/router/route.js:114:3)
+    at process._tickCallback (internal/process/next_tick.js:68:7)
+
+Product ID: SA-2024
+Username: admin.user
+This is impacting all 500 users in our organization!
