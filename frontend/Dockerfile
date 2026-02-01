@@ -6,8 +6,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies using public npm registry
-RUN npm install --registry https://registry.npmjs.org
+# Install dependencies with retries and clean cache
+RUN npm cache clean --force && \
+    npm install --legacy-peer-deps || \
+    (sleep 5 && npm install --legacy-peer-deps) || \
+    (sleep 10 && npm install --legacy-peer-deps)
 
 # Copy source code
 COPY public/ ./public/
