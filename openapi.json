@@ -1,5 +1,5 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.3",
   "info": {
     "title": "TechNova Support API",
     "description": "API for creating ServiceNow incidents and sending Slack notifications",
@@ -242,42 +242,32 @@
       "SupportRequest": {
         "properties": {
           "assignment_group": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Assignment Group",
             "description": "The name of the assignment group returned by the tool get_assignment_groups"
           },
           "caller_username": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Caller Username",
             "description": "The caller username is returned by the tool get_system_user"
           },
           "description": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Description",
             "description": "The description for the incident in ServiceNow"
           },
           "impact_value": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Impact Value",
             "description": "The impact_value is returned by the tool get_impacts"
           },
           "incident_category": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Incident Category",
             "description": "The category name, is returned by the tool get_categories"
           },
@@ -304,17 +294,13 @@
             "title": "Success"
           },
           "incident_number": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Incident Number"
           },
           "incident_sys_id": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Incident Sys Id"
           },
           "slack_message_sent": {
@@ -322,30 +308,30 @@
             "title": "Slack Message Sent",
             "default": false
           },
+          "slack_channel": {
+            "type": "string",
+            "nullable": true,
+            "title": "Slack Channel",
+            "description": "The Slack channel where the notification was sent"
+          },
           "github_issue_created": {
             "type": "boolean",
             "title": "Github Issue Created",
             "default": false
           },
           "github_issue_url": {
-            "anyOf": [
-              {"type": "string"},
-              {"type": "null"}
-            ],
+            "type": "string",
+            "nullable": true,
             "title": "Github Issue Url"
           },
           "github_issue_number": {
-            "anyOf": [
-              {"type": "integer"},
-              {"type": "null"}
-            ],
+            "type": "integer",
+            "nullable": true,
             "title": "Github Issue Number"
           },
           "error_details": {
-            "anyOf": [
-              {"additionalProperties": true, "type": "object"},
-              {"type": "null"}
-            ],
+            "type": "object",
+            "nullable": true,
             "title": "Error Details",
             "description": "A unified wrapper to fetch all details about the error"
           }
@@ -359,10 +345,7 @@
         "properties": {
           "loc": {
             "items": {
-              "anyOf": [
-                {"type": "string"},
-                {"type": "integer"}
-              ]
+              "type": "string"
             },
             "type": "array",
             "title": "Location"

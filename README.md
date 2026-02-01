@@ -130,7 +130,7 @@ All orchestration complexity is handled server-side, making the agent easier to 
 
 \- Graba Tasneem (Architect)
 
-\- Adithi M D (QA Tester)
+\- Adithi M D & Vanshika Immadi(QA Testers)
 
 \- Shaina Munoz (Dev Lead)
 

@@ -274,7 +274,7 @@ jobs:
             --env "GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }}" \
             --env "GITHUB_DEFAULT_REPO=${{ github.repository }}" \
             --env "API_SERVER_URL=$API_SERVER_URL" \
-            --env "API_KEY=" || \
+            --env "API_KEY=${{ secrets.API_KEY }}" || \
           ibmcloud ce application update --name technova-api \
             --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
             --env "SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }}" \
@@ -285,11 +285,7 @@ jobs:
             --env "GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }}" \
             --env "GITHUB_DEFAULT_REPO=${{ github.repository }}" \
             --env "API_SERVER_URL=$API_SERVER_URL" \
-            --env "API_KEY="
-          
-          # TODO: Re-enable API key authentication after uploading openapi.json to watsonx Orchestrate
-          # Change the lines above from: --env "API_KEY=" 
-          # Back to: --env "API_KEY=${{ secrets.API_KEY }}"
+            --env "API_KEY=${{ secrets.API_KEY }}"
           
           # Get the actual API URL after deployment and update if needed
           ACTUAL_URL=$(ibmcloud ce application get --name technova-api --output json | jq -r '.status.url')
