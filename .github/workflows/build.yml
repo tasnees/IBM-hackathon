@@ -266,7 +266,7 @@ jobs:
             --memory 1G \
             --env "SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }}" \
             --env "SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }}" \
-            --env "SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }}" \
+            --env 'SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }}' \
             --env "SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }}" \
             --env "SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }}" \
             --env "GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }}" \
@@ -277,7 +277,7 @@ jobs:
             --image ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }} \
             --env "SERVICENOW_INSTANCE=${{ secrets.SERVICENOW_INSTANCE }}" \
             --env "SERVICENOW_USERNAME=${{ secrets.SERVICENOW_USERNAME }}" \
-            --env "SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }}" \
+            --env 'SERVICENOW_PASSWORD=${{ secrets.SERVICENOW_PASSWORD }}' \
             --env "SLACK_BOT_TOKEN=${{ secrets.SLACK_BOT_TOKEN }}" \
             --env "SLACK_DEFAULT_CHANNEL=${{ secrets.SLACK_DEFAULT_CHANNEL }}" \
             --env "GITHUB_TOKEN=${{ secrets.ISSUE_TOKEN }}" \
