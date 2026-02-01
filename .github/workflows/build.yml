@@ -60,6 +60,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
+          load: true
           tags: |
             ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:${{ github.sha }}
             ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.API_IMAGE_NAME }}:latest
@@ -131,6 +132,7 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
+          load: true
           tags: |
             ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
             ${{ env.IBM_REGISTRY }}/${{ env.IBM_NAMESPACE }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
