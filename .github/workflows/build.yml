@@ -232,8 +232,6 @@ jobs:
           ibmcloud ce project select --id ${{ secrets.CE_PROJECT_ID }}
           echo "✅ Project selected"
 
-      - name: Create registry secret for Code Engine
-        run: |
       - name: Create or update registry secret for Code Engine
         run: |
           if ibmcloud ce secret get --name icr-secret > /dev/null 2>&1; then
