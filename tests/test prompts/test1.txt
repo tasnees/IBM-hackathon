@@ -1,0 +1,9 @@
+Help! SecureAccess Gateway is failing authentication for all users since this morning.
+
+Error: AUTHENTICATION_FAILED - Invalid token signature
+    at TokenValidator.verify (/opt/secureaccess/lib/auth/validator.js:78:15)
+    at AuthMiddleware.authenticate (/opt/secureaccess/lib/middleware/auth.js:34:22)
+
+Product ID: SA-2024
+Username: admin.user
+This is impacting all 500 users in our organization!

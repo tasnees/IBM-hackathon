@@ -1,0 +1,5 @@
+Users in the marketing department are unable to log into CollabSpace. They are getting a "Session expired" error immediately after entering their credentials. This has been happening for about 2 hours now and affects around 30 users.
+
+Product ID: COLLAB-2024
+Username: it.support
+Priority: Medium

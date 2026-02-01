@@ -1,0 +1,12 @@
+Our SecureVault encryption module is throwing errors after the latest update. All API keys generated after 2 PM are invalid.
+
+Traceback (most recent call last):
+  File "encryption/vault.py", line 118, in generate_key
+    key = backend.derive_key(secret)
+  File "encryption/backend.py", line 45, in derive_key
+    raise ValueError("Invalid key length: expected 256, got 128")
+ValueError: Invalid key length: expected 256, got 128
+
+Product ID: SEC-2024
+Username: security.ops
+Priority: Critical — this is blocking all new user onboarding.

@@ -134,6 +134,8 @@ All orchestration complexity is handled server-side, making the agent easier to 
 
 \- Shaina Munoz (Dev Lead)
 
+\-Vanshika Immadi
+
 
 
 # Ficticious Company TechNova Solutions Support API
