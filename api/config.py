@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     
     # API Configuration
     api_server_url: str = os.getenv("API_SERVER_URL", "http://localhost:8000")
+    api_key: str = os.getenv("API_KEY", "")
     api_title: str = "TechNova Support API"
     api_version: str = "1.0.0"
     api_description: str = "API for creating ServiceNow incidents and sending Slack notifications"

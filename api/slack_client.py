@@ -96,6 +96,7 @@ def send_slack_message(
     settings = get_settings()
     result = {
         "success": False,
+        "channel": None,
         "error_details": None
     }
     
@@ -106,6 +107,9 @@ def send_slack_message(
     # Ensure channel has # prefix
     if channel and not channel.startswith('#'):
         channel = f'#{channel}'
+    
+    # Store the channel being used in the result
+    result["channel"] = channel
     
     try:
         client = get_slack_client()

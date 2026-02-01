@@ -44,6 +44,10 @@ class SupportResponse(BaseModel):
     incident_number: Optional[str] = None
     incident_sys_id: Optional[str] = None
     slack_message_sent: bool = False
+    slack_channel: Optional[str] = Field(
+        default=None,
+        description="The Slack channel where the notification was sent"
+    )
     github_issue_created: bool = False
     github_issue_url: Optional[str] = None
     github_issue_number: Optional[int] = None

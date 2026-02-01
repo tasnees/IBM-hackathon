@@ -1,10 +1,130 @@
-\# IBM Hackathon Jan 30 - Feb 1st 2026. 
+\# IBM Hackathon Jan 30 - Feb 1st 2026
 
+This repository contains the project work for the IBM Hackathon. We created a fictitious company called **TechNova Solutions** and built an AI-powered solution to address a critical operational challenge.
 
+---
 
-This repository contains the project work for the IBM Hackathon. We created a ficticious company called TechNova Solutions, created a list of departments, products, contact guide and instructions to guide our agent on how to decide what department to reach out to for a ticket. If the complaint contains a stack trace, it creates a github issue to this repostiory if not it simply creates a ticket and messages a configured slack channel. 
+## Problem Statement
 
+**TechNova Solutions** is a mid-sized enterprise software company with 57 assignment groups spread across 9 departments—from Cloud Infrastructure to Security to IoT. Their customers face a frustrating support experience:
 
+1. **Ticket Avoidance** – Customers are overwhelmed by the complexity of creating support tickets. They don't know which team handles their product, what category to select, or how to set priority. Many simply give up and never report issues.
+
+2. **Routing Black Hole** – When tickets *are* created, they often lack an Assignment Group. These orphaned tickets sit in a general queue for days because no team claims ownership and no support engineer is notified.
+
+3. **Tool Sprawl** – Support workflows span multiple disconnected systems (ServiceNow, Slack, GitHub). Engineers manually copy incident details between tools, wasting time and introducing errors.
+
+4. **Rigid Agent Configuration** – Traditional chatbot solutions require redeployment whenever business rules change (e.g., new products, team restructuring, priority mappings). This creates bottlenecks and slows adaptation to business needs.
+
+**The Result:** Slow response times, frustrated customers, burned-out support staff, and critical bugs that go unreported until they become outages.
+
+---
+
+## Our Solution
+
+**Multi-Tool Enterprise Workflow Choreographer** – An agentic AI built on IBM watsonx Orchestrate that dynamically coordinates workflows across siloed enterprise tools (ServiceNow, GitHub, Slack) without human orchestration.
+
+### How It Works
+
+When a customer reports a problem in natural language:
+
+1. **Conversational Intake** – The agent gathers customer details, product information, and problem description through a natural conversation—no forms, no dropdowns, no confusion.
+
+2. **Intelligent Routing** – Using an editable knowledge base, the agent automatically identifies the correct assignment group based on product ID patterns (e.g., `CLOUD-*` → Cloud Support, `SEC-*` → Security Team).
+
+3. **Atomic Multi-Tool Execution** – A single API call triggers three coordinated actions:
+   - ✅ Creates a properly-routed ServiceNow incident with correct priority, category, and assignment group
+   - ✅ Sends a Slack notification to the team-specific channel (e.g., `#cloud-support`, `#security-incidents`)
+   - ✅ Creates a GitHub issue *only if* the report contains a stack trace or error code
+
+4. **Instant Feedback** – The customer receives confirmation with their incident number, and the support team is already alerted—all within seconds.
+
+### Key Benefits
+
+| Before | After |
+|--------|-------|
+| Tickets lost in general queue | Every ticket routed to the right team instantly |
+| Manual Slack notifications | Automatic alerts to team-specific channels |
+| Stack traces buried in tickets | GitHub issues created automatically for dev triage |
+| Redeploy agent for rule changes | Update knowledge base files—no redeployment needed |
+
+---
+
+## Why a Custom API Instead of IBM's Built-in Tools?
+
+IBM watsonx Orchestrate provides native integrations for ServiceNow, Slack, and GitHub. So why did we build a custom API instead? Here's why the custom approach is superior for enterprise workflows:
+
+### 1. **Atomic Multi-Tool Orchestration**
+
+With native tools, the agent must make **three separate tool calls** (ServiceNow → Slack → GitHub), each with its own failure modes. If the Slack call fails after ServiceNow succeeds, you have an inconsistent state.
+
+Our custom API provides **atomic orchestration**—one API call triggers all three actions with coordinated error handling. If any step fails, the API can rollback, retry, or report the partial failure coherently.
+
+```
+Native Tools:          Custom API:
+Agent → ServiceNow     Agent → Custom API → ServiceNow
+Agent → Slack                            → Slack  
+Agent → GitHub                           → GitHub (conditional)
+(3 calls, 3 failure points)   (1 call, coordinated handling)
+```
+
+### 2. **Centralized Business Logic**
+
+Product-to-team mappings, priority calculations, and conditional logic (e.g., "only create GitHub issue if stack trace detected") live in **one place**—the API backend. This means:
+
+- Business rules can be updated without touching the agent
+- Logic is testable with standard unit tests
+- No risk of agent prompt injection bypassing rules
+
+### 3. **Data Governance & Security**
+
+With native tools, credentials for ServiceNow, Slack, and GitHub must be configured directly in watsonx Orchestrate. Our approach:
+
+- **Single credential store** – All secrets live in the API's environment (Code Engine secrets)
+- **No credential exposure to agent** – The agent only knows the API endpoint
+- **Audit trail** – All actions logged centrally with correlation IDs
+- **Data filtering** – The API controls exactly what data flows to each system
+
+### 4. **Dynamic Channel Routing**
+
+Native Slack tools send to a fixed channel. Our API dynamically routes notifications based on the assignment group:
+
+| Assignment Group | Slack Channel |
+|------------------|---------------|
+| CLOUD-L1-Support | #cloud-support |
+| SEC-L1-Support | #security-incidents |
+| DATA-L1-Support | #data-support |
+| *fallback* | #general-support |
+
+This routing logic lives in code, not in agent prompts.
+
+### 5. **Conditional Tool Execution**
+
+The GitHub issue should only be created if the problem description contains a stack trace. With native tools, this requires complex prompt engineering that's fragile and hard to test.
+
+Our API uses deterministic code:
+```python
+if contains_stack_trace(description):
+    create_github_issue(...)
+```
+
+### 6. **Scalability Without Redeployment**
+
+When TechNova adds a new product line or restructures teams:
+
+| Change | Native Tools | Custom API |
+|--------|--------------|------------|
+| New assignment group | Redeploy agent with updated prompts | Add to knowledge base |
+| New Slack channel mapping | Reconfigure agent tools | Update API config |
+| New priority rules | Rewrite agent instructions | Update API logic |
+
+### 7. **Reduced Agent Complexity**
+
+The agent's job is simplified to:
+1. Collect information from the user
+2. Call **one** API endpoint
+
+All orchestration complexity is handled server-side, making the agent easier to maintain and less prone to hallucination-induced errors.
 
 ## Team Rag Tag
 
@@ -61,6 +181,202 @@ Set the following environment variables in your `.env` file:
 | `GITHUB_TOKEN` | GitHub Personal Access Token |
 | `GITHUB_DEFAULT_REPO` | Default repository in `owner/repo` format |
 | `API_SERVER_URL` | The public URL of the deployed API (used in OpenAPI spec for watsonx Orchestrate) |
+| `API_KEY` | Secret key for authenticating API requests (see [API Key Authentication](#api-key-authentication)) |
+
+---
+
+## API Key Authentication
+
+The TechNova Support API requires an API key for all endpoints (except `/health`). This adds an extra layer of security, ensuring only authorized clients (like your watsonx Orchestrate agent) can access the API.
+
+### How It Works
+
+1. **Header-based authentication** – Clients must include the `X-API-Key` header in every request
+2. **Server-side validation** – The API validates the key against the `API_KEY` environment variable
+3. **Development mode** – If `API_KEY` is not set, the API runs in "open mode" (useful for local testing)
+
+### Generating an API Key
+
+Generate a secure random API key:
+
+```bash
+# Python
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# PowerShell
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
+
+# OpenSSL
+openssl rand -base64 32
+```
+
+Example output: `dGVjaG5vdmEtc3VwcG9ydC1hcGkta2V5LTIwMjY=`
+
+### Configuring the API Key
+
+#### 1. Add to your `.env` file
+
+```bash
+API_KEY=your-generated-api-key-here
+```
+
+#### 2. Add to IBM Code Engine (for deployed API)
+
+```bash
+# Update the secret with the new API_KEY
+ibmcloud ce secret update --name technova-api-secrets --from-literal API_KEY=your-generated-api-key-here
+
+# Or recreate from .env file
+ibmcloud ce secret update --name technova-api-secrets --from-env-file .env
+
+# Restart the app to pick up changes
+ibmcloud ce app update --name technova-api --env-from-secret technova-api-secrets
+```
+
+#### 3. Add to GitHub Actions (for CI/CD)
+
+Go to your repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+| Secret Name | Value |
+|-------------|-------|
+| `API_KEY` | Your generated API key |
+
+Then update `.github/workflows/build.yml` to pass the secret to Code Engine.
+
+### Configuring watsonx Orchestrate Toolset with API Key
+
+When you upload the `openapi.json` to watsonx Orchestrate, you need to configure the API key authentication. However, there's an important caveat for **first-time setup**.
+
+#### ⚠️ Important: First-Time Deployment Sequence
+
+watsonx Orchestrate validates your OpenAPI spec by calling your server URL during upload. If your API requires authentication, the validation will fail with a **401 error** before you can configure the API key.
+
+**Solution:** Deploy your API with authentication **disabled** first, then enable it after configuring watsonx Orchestrate.
+
+##### First-Time Setup Sequence
+
+| Step | Action | API_KEY Status |
+|------|--------|----------------|
+| 1 | Deploy API to Code Engine | `API_KEY=""` (empty/disabled) |
+| 2 | Upload `openapi.json` to watsonx Orchestrate | — |
+| 3 | Configure API key in watsonx Orchestrate toolset | — |
+| 4 | Re-deploy API with authentication enabled | `API_KEY="your-secret-key"` |
+
+##### How to Disable API Key for Initial Deployment
+
+**Option A: Via GitHub Actions (`.github/workflows/build.yml`)**
+
+Temporarily change the API_KEY environment variable to empty:
+
+```yaml
+# Before (authentication enabled):
+--env "API_KEY=${{ secrets.API_KEY }}"
+
+# After (authentication disabled for initial upload):
+--env "API_KEY="
+```
+
+**Option B: Via IBM Cloud CLI**
+
+```bash
+# Disable authentication temporarily
+ibmcloud ce app update --name technova-api --env "API_KEY="
+
+# After configuring watsonx, re-enable authentication
+ibmcloud ce app update --name technova-api --env "API_KEY=your-secret-key"
+```
+
+##### After watsonx Orchestrate is Configured
+
+Once you've uploaded the OpenAPI spec and configured the API key in watsonx Orchestrate:
+
+1. **Re-enable authentication** by setting `API_KEY` to your actual secret
+2. **Use the same key** in both places (Code Engine and watsonx Orchestrate)
+3. **Test the agent** to verify authentication works end-to-end
+
+> **Note:** For subsequent deployments (updates), you can keep `API_KEY` enabled since the toolset is already configured in watsonx Orchestrate.
+
+---
+
+#### Step 1: Navigate to Your Agent's Toolset
+
+1. Go to [watsonx Orchestrate](https://dl.watson-orchestrate.ibm.com/build)
+2. Open your **TechNova Solutions** agent
+3. Click **Toolset** in the left sidebar
+
+#### Step 2: Add the OpenAPI Tool
+
+1. Click **Add tool** (or the **+** button)
+2. Select **Import from OpenAPI**
+3. Click **Upload file** and select your `openapi.json` file
+4. Wait for the file to be parsed
+
+#### Step 3: Configure API Key Authentication
+
+After the OpenAPI file is parsed, watsonx Orchestrate will detect the `ApiKeyAuth` security scheme:
+
+1. You'll see a message indicating **"This API requires authentication"**
+2. Click **Configure authentication** (or the gear icon ⚙️)
+3. In the authentication dialog:
+   - **Authentication type**: Should show `API Key` (auto-detected)
+   - **Header name**: Should show `X-API-Key` (auto-detected from OpenAPI spec)
+   - **API Key value**: Enter your generated API key here
+4. Click **Save** or **Apply**
+
+#### Step 4: Verify the Configuration
+
+1. After saving, you should see a green checkmark ✓ next to the authentication status
+2. Click the **⋮** menu on any tool (e.g., "Get Support")
+3. Select **Test**
+4. Fill in sample values and click **Run**
+5. If authentication is correct, you'll get a successful response
+
+#### Troubleshooting Authentication Issues
+
+| Issue | Solution |
+|-------|----------|
+| "401 Unauthorized" error | Check that the API key is entered correctly (no extra spaces) |
+| "403 Forbidden" error | The API key doesn't match what's configured on the server |
+| Can't find authentication settings | Click the gear icon ⚙️ next to the toolset name |
+| Authentication not detected | Ensure your `openapi.json` has the `securitySchemes` section |
+
+#### Updating the API Key
+
+If you need to rotate or change the API key:
+
+1. Go to **Toolset** in your agent
+2. Click the gear icon ⚙️ next to the API tool
+3. Update the **API Key value** field
+4. Click **Save**
+
+> **Note:** After updating the API key in watsonx Orchestrate, make sure the same key is configured in your deployed API's environment variables (Code Engine secrets).
+
+### Testing API Key Authentication
+
+```bash
+# Without API key (should return 401)
+curl -X GET "http://localhost:8000/assignment_groups"
+# Response: {"detail":"Missing API Key. Include 'X-API-Key' header in your request."}
+
+# With invalid API key (should return 403)
+curl -X GET "http://localhost:8000/assignment_groups" -H "X-API-Key: wrong-key"
+# Response: {"detail":"Invalid API Key"}
+
+# With valid API key (should return data)
+curl -X GET "http://localhost:8000/assignment_groups" -H "X-API-Key: your-api-key"
+# Response: {"assignment_groups": [...]}
+
+# Health endpoint (no API key required)
+curl -X GET "http://localhost:8000/health"
+# Response: {"status":"healthy","version":"1.0.0"}
+```
+
+### Security Best Practices
+
+1. **Never commit API keys** – Always use environment variables or secrets management
+2. **Rotate keys regularly** – Generate new keys periodically and update all clients
+3. **Use different keys per environment** – Dev, staging, and production should have separate keys
+4. **Monitor usage** – Check API logs for unauthorized access attempts
 
 ---
 
@@ -953,7 +1269,22 @@ python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/health" -Method Get | ConvertTo-Json
 
+# Create test Service Now Assignment Groups
 
+```bash
+
+# Preview what would be created (no changes made)
+python -m tests.create_ag_groups --dry-run
+
+# Create all assignment groups
+python -m tests.create_ag_groups
+
+# List existing groups
+python -m tests.create_ag_groups --list
+
+# Delete all groups (dangerous!)
+python -m tests.create_ag_groups --delete --confirm
+```
 
 # See Live Preview
 
@@ -972,6 +1303,7 @@ Replace `your-api-url` and `your-frontend-url` with your actual Code Engine depl
 - copilot instructions for code generatation
 - prod and nonprod environment handling 
 - hardware and sofware integration for error handling
+- fix react chatbox connection to orchestrate agent
 
 
 ## Example Agent Prompt
