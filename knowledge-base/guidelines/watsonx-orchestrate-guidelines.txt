@@ -1,0 +1,183 @@
+# watsonx Orchestrate Agent Guidelines
+
+These guidelines should be added in the **Behavior → Guidelines** section of your watsonx Orchestrate agent. Click "Add Guideline" for each one.
+
+---
+
+## Guideline 1: Map CLOUD Products to Assignment Group
+
+**Name:** CLOUD Product Assignment Group Mapping
+
+**Condition:** The user mentions a CLOUD product (CLOUD-001 to CLOUD-010) or products like NovaSphere VM, NovaSphere Containers, NovaStorage, NovaCDN, NovaNetwork VPC, NovaBackup, NovaLoadBalancer, NovaServerless, or NovaEdge
+
+**Action:** Set the assignment_group parameter to "CLOUD-L1-Support" and set incident_category to "Infrastructure" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 2: Map DATA Products to Assignment Group
+
+**Name:** DATA Product Assignment Group Mapping
+
+**Condition:** The user mentions a DATA product (DATA-001 to DATA-010) or products like NovaWarehouse, NovaBI Studio, NovaDataPipeline, NovaML Platform, NovaStream, NovaLake, NovaQuery, NovaCatalog, NovaViz, or NovaPredict
+
+**Action:** Set the assignment_group parameter to "DATA-L1-Support" and set incident_category to "Data Services" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 3: Map SECURITY Products to Assignment Group
+
+**Name:** SECURITY Product Assignment Group Mapping
+
+**Condition:** The user mentions a SEC product (SEC-001 to SEC-010) or products like NovaShield, NovaIdentity, NovaVault, NovaSIEM, NovaCompliance, NovaFirewall, NovaScan, NovaCrypt, or NovaZeroTrust
+
+**Action:** Set the assignment_group parameter to "SEC-L1-Support" and set incident_category to "Security" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 4: Map COLLABORATION Products to Assignment Group
+
+**Name:** COLLAB Product Assignment Group Mapping
+
+**Condition:** The user mentions a COLLAB product (COLLAB-001 to COLLAB-010) or products like NovaConnect, NovaChat, NovaMail, NovaDocs, NovaBoard, NovaProjects, NovaWiki, NovaForms, NovaIntranet, or NovaEvents
+
+**Action:** Set the assignment_group parameter to "COLLAB-L1-Support" and set incident_category to "Collaboration" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 5: Map FINTECH Products to Assignment Group
+
+**Name:** FINTECH Product Assignment Group Mapping
+
+**Condition:** The user mentions a FIN product (FIN-001 to FIN-010) or products like NovaPay, NovaLedger, NovaInvoice, NovaExpense, NovaTreasury, NovaPayroll, NovaTax, NovaAudit, or NovaFraud
+
+**Action:** Set the assignment_group parameter to "FIN-L1-Support" and set incident_category to "Financial Systems" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 6: Map DEVTOOLS Products to Assignment Group
+
+**Name:** DEVTOOLS Product Assignment Group Mapping
+
+**Condition:** The user mentions a DEV product (DEV-001 to DEV-010) or products like NovaCode, NovaPipeline, NovaRegistry, NovaTest, NovaDebugger, NovaAPI Gateway, NovaMonitor, NovaLog, NovaTrace, or NovaDocs API
+
+**Action:** Set the assignment_group parameter to "DEVTOOLS-L1-Support" and set incident_category to "Developer Tools" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 7: Map IOT Products to Assignment Group
+
+**Name:** IOT Product Assignment Group Mapping
+
+**Condition:** The user mentions an IOT product (IOT-001 to IOT-010) or products like NovaSense, NovaFactory, NovaMaintenance, NovaAsset, NovaEnergy, NovaQuality, NovaDigitalTwin, or NovaRobotics
+
+**Action:** Set the assignment_group parameter to "IOT-L1-Support" and set incident_category to "IoT/Industrial" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 8: Map Critical Priority to Urgency/Impact
+
+**Name:** Critical Priority Mapping
+
+**Condition:** The user indicates the issue is critical, urgent, emergency, system down, or affecting all users
+
+**Action:** Set urgency_value to "1" and impact_value to "1" when calling the Get Support API. Prefix the short_description with "[CRITICAL]"
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 9: Map High Priority to Urgency/Impact
+
+**Name:** High Priority Mapping
+
+**Condition:** The user indicates the issue is high priority, major problem, significant impact, or affecting many users
+
+**Action:** Set urgency_value to "2" and impact_value to "2" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 10: Map Medium Priority to Urgency/Impact
+
+**Name:** Medium Priority Mapping
+
+**Condition:** The user indicates the issue is medium priority, moderate impact, or has a workaround available
+
+**Action:** Set urgency_value to "3" and impact_value to "3" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 11: Map Low Priority to Urgency/Impact
+
+**Name:** Low Priority Mapping
+
+**Condition:** The user indicates the issue is low priority, minor, cosmetic, or not urgent
+
+**Action:** Set urgency_value to "4" and impact_value to "4" when calling the Get Support API
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 12: Include Customer Email in Description
+
+**Name:** Customer Email in Description
+
+**Condition:** The user provides their email address
+
+**Action:** Include the customer's email in the description field using this format: "Customer {email} reported an issue with {product}. Details: {problem_description}"
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 13: Gather Required Information Before Creating Ticket
+
+**Name:** Gather Required Information
+
+**Condition:** The user wants to report an incident or create a support ticket
+
+**Action:** Before calling the Get Support API, ensure you have collected: 1) Customer email address, 2) Product ID or product name, 3) Brief description of the issue, 4) Priority level. Ask for any missing information before proceeding.
+
+**Use a tool:** ❌ Disabled
+
+---
+
+## Guideline 14: Handle Unknown Products
+
+**Name:** Unknown Product Fallback
+
+**Condition:** The user's product cannot be identified from the known product list or the user doesn't know their product ID
+
+**Action:** Set assignment_group to "GENERAL-L1-Support" and incident_category to "General". Include the user's product description in the incident description for manual routing.
+
+**Use a tool:** ✅ Enable → Select "Get Support"
+
+---
+
+## Guideline 15: Confirm Before Creating Ticket
+
+**Name:** Confirm Ticket Details
+
+**Condition:** All required information has been collected and you are about to create the support ticket
+
+**Action:** Summarize the ticket details to the user and ask for confirmation before calling the Get Support API. Include: customer email, product, issue summary, and priority level.
+
+**Use a tool:** ❌ Disabled
