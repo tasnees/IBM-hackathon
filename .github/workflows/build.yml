@@ -1,4 +1,4 @@
-name: Build and Deploy to IKS
+name: Build and Deploy to IBM Code Engine
 
 on:
   push:
