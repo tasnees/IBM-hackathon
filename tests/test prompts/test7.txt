@@ -1,5 +1,0 @@
-CloudMatrix storage buckets in the us-east region are completely inaccessible. We cannot upload or download any files. This started around 9 AM and is affecting our entire engineering team.
-
-Product ID: CM-2024
-Username: cloud.admin
-Priority: Critical — production deployments are blocked.
