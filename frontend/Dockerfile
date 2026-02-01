@@ -1,16 +1,13 @@
-# Build stage
-FROM node:20-alpine AS build
+# Build stage - use full Node image for better compatibility
+FROM node:20 AS build
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with retries and clean cache
-RUN npm cache clean --force && \
-    npm install --legacy-peer-deps || \
-    (sleep 5 && npm install --legacy-peer-deps) || \
-    (sleep 10 && npm install --legacy-peer-deps)
+# Install dependencies
+RUN npm install --legacy-peer-deps --loglevel verbose
 
 # Copy source code
 COPY public/ ./public/

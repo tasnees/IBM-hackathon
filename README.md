@@ -252,31 +252,137 @@ ibmcloud ce application update --name technova-api \
 
 ### IBM watsonx Orchestrate Agent
 
+This section provides detailed instructions for creating the **TechNova Solutions** agent in IBM watsonx Orchestrate - a multi-tool enterprise workflow choreographer that dynamically coordinates workflows across siloed enterprise tools (ServiceNow, GitHub, Slack) without human orchestration.
+
+#### What This Agent Does
+
+When a customer reports a problem with a product, the agent:
+1. **Gathers information** - Collects customer details, product name, and problem description
+2. **Identifies the team** - Uses the knowledge base to find the corresponding support team
+3. **Creates a ServiceNow incident** - Logs the issue with proper priority and assignment
+4. **Creates a GitHub issue** - If the report contains a stack trace or error code
+5. **Alerts developers in Slack** - Sends notification to the appropriate channel
+
+This compresses operational response time and eliminates manual tool switching.
+
+---
+
 #### Step 1: Access watsonx Orchestrate
 
 1. Go to [dl.watson-orchestrate.ibm.com/build](https://dl.watson-orchestrate.ibm.com/build)
 2. Sign in with your IBM Cloud account (or IBMid)
 3. If prompted, accept the terms of service
 
+---
+
 #### Step 2: Create a New Agent
 
-1. From the watsonx Orchestrate home page, click **Create Agent** or **Build**
-2. Give your agent a name (e.g., `TechNova Support Agent`)
-3. Add a description of what your agent does
+1. From the watsonx Orchestrate home page, click **Manage agents** → **Create Agent**
+2. Give your agent a name: `TechNova Solutions`
+3. Select a model (e.g., `GPT-OSS 120B` or your preferred LLM)
 
-#### Step 3: Configure Agent Skills
+---
 
-1. Click **Add Skill** to add capabilities to your agent
-2. You can add skills from:
-   - **Pre-built skills** - Ready-to-use integrations
-   - **Custom skills** - Connect to your own APIs (like this Support API)
-   - **OpenAPI imports** - Import API definitions
+#### Step 3: Configure Agent Profile
 
-#### Step 4: Connect to Your Support API (Custom API Tool)
+In the **Profile** section, configure the following:
 
-To add a custom API as a tool in watsonx Orchestrate, you need to create and upload an OpenAPI specification file.
+##### Description
 
-##### Step 4a: Create the OpenAPI JSON File
+```
+Multi-tool enterprise workflow choreographer, in IBM watsonx orchestrator an agentic AI that could dynamically coordinate workflows across siloed enterprise tools such as ServiceNow, GitHub, Slack, or Confluence, without human orchestration to compress operational response time or eliminate manual tool switching.
+
+For example, when a customer reports a problem with a product, the solution guides the customer to find the corresponding team based on instructions on a pre-defined Confluence page that maps a team to that product and call a custom API with the gathered information. The backend API is responsible for creating a service now incident, creating a github issue and alerting developers in slack.
+
+1. Define the workflow:
+   - Start: A customer reports a problem with a product.
+   - Step 1: Gather customer information and product details.
+   - Step 2: Identify the corresponding team for the product.
+   - Step 3: Call a custom API with the gathered information.
+   - Step 4: Create a ServiceNow incident.
+   - Step 5: Create a GitHub issue.
+   - Step 6: Alert developers in Slack.
+
+For the Service Now Incident: short-description, description, caller-id and priority. The description should contain customer email and product name.
+```
+
+##### Welcome Message
+
+```
+Hello, welcome to TechNova Solutions Support
+```
+
+##### Quick Start Prompts
+
+Add the following pre-set prompt:
+- `Report an incident`
+
+##### Agent Style
+
+Select **Default** (Recommended) - Relies on the model's intrinsic ability to understand, plan, and call tools and knowledge.
+
+---
+
+#### Step 4: Add Knowledge Base
+
+The agent needs knowledge about your company, products, and support processes.
+
+1. Click **Knowledge** in the left sidebar
+2. Click **Replace source** or **Add source**
+3. Create a new knowledge source called `Company Directory`
+4. Add description: `Company details, with products mappings, related to corresponding departments, contains customer instructions on how to find product id, incident creation instructions and service now assignment groups.`
+5. Upload the following documents from the `knowledge-base/` folder:
+
+| File | Purpose |
+|------|---------|
+| `agent_instructions.txt` | Instructions for how the agent should behave |
+| `company-overview.txt` | Company background and department information |
+| `how-to-find-product-id.txt` | Guide for identifying product IDs |
+| `incident-creation-guide.txt` | How to create proper incidents |
+| `product-catalog.txt` | List of products and their categories |
+| `servicenow-assignment-groups.txt` | Mapping of products to support teams |
+| `guidelines/product-to-assignment-group-mapping.txt` | **Critical:** Maps products to ServiceNow assignment groups |
+| `guidelines/incident-creation-workflow.txt` | Step-by-step workflow for creating incidents |
+
+##### Key Guidelines for Product-to-Assignment Group Mapping
+
+The `guidelines/product-to-assignment-group-mapping.txt` file is essential for the agent to correctly route incidents. It contains:
+
+**Quick Mapping by Product ID Prefix:**
+| Product ID Prefix | Assignment Group |
+|-------------------|------------------|
+| CLOUD-* | CLOUD-L1-Support |
+| DATA-* | DATA-L1-Support |
+| SEC-* | SEC-L1-Support |
+| COLLAB-* | COLLAB-L1-Support |
+| FIN-* | FIN-L1-Support |
+| DEV-* | DEVTOOLS-L1-Support |
+| IOT-* | IOT-L1-Support |
+
+**Priority to Urgency/Impact Mapping:**
+| Priority | urgency_value | impact_value |
+|----------|---------------|--------------|
+| Critical | 1 | 1 |
+| High | 2 | 2 |
+| Medium | 3 | 3 |
+| Low | 4 | 4 |
+
+**Incident Category by Product:**
+| Product Prefix | incident_category |
+|----------------|-------------------|
+| CLOUD-* | Infrastructure |
+| DATA-* | Data Services |
+| SEC-* | Security |
+| COLLAB-* | Collaboration |
+| FIN-* | Financial Systems |
+| DEV-* | Developer Tools |
+| IOT-* | IoT/Industrial |
+
+---
+
+#### Step 5: Add Toolset (API Integration)
+
+##### Step 5a: Create the OpenAPI JSON File
 
 1. Your FastAPI application automatically generates an OpenAPI spec at `/openapi.json`
 2. Download or fetch the spec from your deployed API:
@@ -297,58 +403,143 @@ To add a custom API as a tool in watsonx Orchestrate, you need to create and upl
      "paths": { ... }
    }
    ```
-4. Save the file as `openapi.json` (a pre-configured version is available in the repo as `openapi-watsonx.json`)
 
-##### Step 4b: Upload the OpenAPI JSON as a Tool
+##### Step 5b: Upload the OpenAPI JSON as a Tool
 
-1. In watsonx Orchestrate, go to your agent's configuration
-2. Click **Add Skill** or **Add Tool**
+1. Click **Toolset** in the left sidebar
+2. Click **Add tool**
 3. Select **Import from OpenAPI** or **Custom API**
 4. Click **Upload file** and select your `openapi.json` file
 5. Wait for the file to be parsed and validated
 
-##### Step 4c: Select Endpoints for Your Agent
+##### Step 5c: Select Endpoints for Your Agent
 
-After uploading, you'll see a list of all available endpoints. Select the ones you want your agent to access:
+After uploading, you'll see a list of all available endpoints. Enable these tools:
 
-| Endpoint | Method | Description | Recommended |
-|----------|--------|-------------|-------------|
-| `/get_support` | POST | Create support incidents | ✅ Yes |
-| `/assignment_groups` | GET | List ServiceNow assignment groups | ✅ Yes |
-| `/categories` | GET | List incident categories | ✅ Yes |
-| `/impacts` | GET | List impact values | ✅ Yes |
-| `/urgencies` | GET | List urgency values | ✅ Yes |
-| `/health` | GET | Health check endpoint | ❌ Optional |
+| Tool Name | Endpoint | Description |
+|-----------|----------|-------------|
+| **Get Support** | `POST /get_support` | Create a support incident in ServiceNow and send a Slack notification |
+| **List Assignment Groups** | `GET /assignment_groups` | Get available ServiceNow assignment groups |
+| **List Categories** | `GET /categories` | Get available incident categories |
+| **List Impacts** | `GET /impacts` | Get available impact values |
+| **List Urgencies** | `GET /urgencies` | Get available urgency values |
 
-1. Check the box next to each endpoint you want to enable
-2. Click **Add Selected** or **Import**
-3. The tools will now appear in your agent's skill list
+##### Step 5d: Test the Connection
 
-##### Step 4d: Configure Authentication (if required)
+1. Click the **⋮** menu on each tool
+2. Select **Test**
+3. Provide sample input values
+4. Verify the response is correct
 
-If your API requires authentication:
-1. Click on the imported skill/tool
-2. Go to **Authentication** settings
-3. Configure the appropriate auth method (API Key, OAuth, etc.)
-4. Save the configuration
+---
 
-##### Step 4e: Test the Connection
+#### Step 6: Configure Agent Behavior
 
-1. Click **Test** on each imported tool
-2. Provide sample input values
-3. Verify the response is correct
-4. If errors occur, check:
-   - The `servers` URL is correct and accessible
-   - Authentication is properly configured
-   - The API is deployed and running
+In the **Behavior** section, add detailed instructions for how the agent should operate:
 
-#### Step 5: Train and Deploy
+##### Instructions
 
-1. Add sample phrases that users might say to trigger skills
-2. Test your agent in the preview chat
-3. When ready, click **Deploy** to make it available
+```
+**Role**  
+You are a Multi‑tool Enterprise Workflow Choreographer in IBM watsonx Orchestrator. Your job is to interact with the user, gather all required details, determine the appropriate team from the knowledge base mapping, and then automatically trigger the downstream actions (ServiceNow incident, GitHub issue, Slack alert) without any human hand‑off.
 
-> **Tip:** You can access your API's interactive documentation at `https://your-api-url/docs` to see all available endpoints and test them manually.
+**Tool Usage Guidelines**  
+1. Never call a tool until you have collected **all** required parameters from the user; do not guess or assume missing values.  
+2. Call each tool **once** per unique set of parameters.  
+3. If a tool fails or returns an error, report the error to the user and offer to retry.  
+
+**How To Use Tools**  
+
+- **Gather required information**  
+  1. Prompt the user for:  
+     - Customer email  
+     - Customer name (optional)  
+     - Product name or Product ID 
+     - Brief problem description (to be used as the incident short‑description)  
+     - Desired priority (e.g., Low/Medium/High)  
+  2. Validate that each answer is present; if any piece is missing, ask the user again before proceeding.
+
+- **Identify the owning team**  
+  Use the knowledge base to parse the product name/ID and look up the team in the pre‑defined mapping. The result should be the **assignment_group** name to be passed to ServiceNow.
+
+- **Map priority to ServiceNow impact/urgency**  
+  - High → impact = "1", urgency = "1"  
+  - Medium → impact = "2", urgency = "2"  
+  - Low → impact = "3", urgency = "3"
+
+- **Create the support incident**  
+  Call **Get Support** with:  
+  - `short_description` = user‑provided brief problem description  
+  - `description` = "Customer [email] reported an issue with **[product]**. Details: [problem description]" (must include email and product)  
+  - `caller_username` = the customer email (or the ServiceNow user ID if known)  
+  - `impact_value` = value derived from priority  
+  - `urgency_value` = value derived from priority  
+  - `assignment_group` = team name obtained from the knowledge base lookup  
+  - `incident_category` = product category (if available; otherwise set to "General")  
+
+- **Return confirmation to the user**  
+  Summarize the actions performed, including the ServiceNow incident number, GitHub issue URL (if created), and Slack notification status.
+
+**How To Route To Other Agents**  
+- **servicenow_case_management_agent_80b2b988** – can handle any advanced ServiceNow case management tasks, such as updating incident fields, adding work notes, or linking incidents to change requests. Delegate to this agent whenever the workflow requires ServiceNow functionality not covered by the Get Support tool.
+```
+
+---
+
+#### Step 7: Configure Channels (Optional)
+
+In the **Channels** section, you can enable various communication channels:
+
+| Channel | Description |
+|---------|-------------|
+| **Home page** | Show the agent on the Orchestrate Chat home page ✅ |
+| **Embedded agent** | Customize chat UI for embedding in your website |
+| **Teams** | Enable communication via Microsoft Teams |
+| **Slack** | Configure Slack to connect with the agent |
+| **WhatsApp with Twilio** | Enable WhatsApp communication |
+| **Facebook Messenger** | Enable Facebook Messenger |
+
+---
+
+#### Step 8: Deploy the Agent
+
+1. Click the **Deploy** button in the top right corner
+2. Review the deployment settings
+3. Confirm deployment
+4. Your agent is now live and accessible!
+
+---
+
+#### Testing Your Agent
+
+Use the **Talk to agent** panel on the right side to test. Try these example prompts:
+
+**Example 1: Bug Report with Stack Trace**
+```
+Help! SecureAccess Gateway is failing authentication for all users since this morning.
+
+Error: AUTHENTICATION_FAILED - Invalid token signature
+    at TokenValidator.verify (/opt/secureaccess/lib/auth/validator.js:78:15)
+    at AuthMiddleware.authenticate (/opt/secureaccess/lib/middleware/auth.js:34:22)
+
+Product ID: SA-2024
+Username: admin.user
+This is impacting all 500 users in our organization!
+```
+
+**Example 2: General Support Request**
+```
+I need help resetting my password for CloudMatrix Pro. My username is jane.smith and I've been locked out after too many failed attempts. Product ID: CM-2024
+```
+
+The agent will:
+1. Identify the product from the Product ID
+2. Look up the assignment group in the knowledge base
+3. Create a ServiceNow incident with appropriate priority
+4. Send a Slack notification to the support channel
+5. Create a GitHub issue (if the report contains a stack trace)
+
+> **Tip:** Access your API's interactive documentation at `https://your-api-url/docs` to see all available endpoints and test them manually.
 
 > **Troubleshooting:** If you see "No server found in the OpenAPI definition", ensure your `openapi.json` includes the `servers` array with your API's full URL.
 
@@ -766,10 +957,12 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/health" -Method Get | ConvertTo-Js
 
 # See Live Preview
 
+Replace `your-api-url` and `your-frontend-url` with your actual Code Engine deployment URLs.
+
 | Service	| URL|
 |------------|----|
-| API	| https://technova-api.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud |
-| Frontend	| https://technova-frontend.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud |
+| API	| https://your-api-url.codeengine.appdomain.cloud |
+| Frontend	| https://your-frontend-url.codeengine.appdomain.cloud |
 
 
 # Project/Repository Enhancements
@@ -781,6 +974,13 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/health" -Method Get | ConvertTo-Js
 - hardware and sofware integration for error handling
 
 
+## Example Agent Prompt
+
+Once your API is deployed and connected to watsonx Orchestrate, you can test the agent with prompts like this:
+
+### Example 1: Bug Report with Stack Trace (Creates GitHub Issue + ServiceNow Ticket)
+
+```
 Help! SecureAccess Gateway is failing authentication for all users since this morning.
 
 Error: AUTHENTICATION_FAILED - Invalid token signature
@@ -794,3 +994,25 @@ Error: AUTHENTICATION_FAILED - Invalid token signature
 Product ID: SA-2024
 Username: admin.user
 This is impacting all 500 users in our organization!
+```
+
+### Example 2: General Support Request (Creates ServiceNow Ticket Only)
+
+```
+I need help resetting my password for CloudMatrix Pro. My username is jane.smith and I've been locked out after too many failed attempts. Product ID: CM-2024
+```
+
+### Example 3: Performance Issue
+
+```
+DataFlow Analytics is running extremely slow today. Reports that used to take 5 seconds are now taking over 2 minutes. Product ID: DF-2024, Username: data.analyst
+```
+
+### What the Agent Does
+
+Based on the prompt content, the agent will:
+1. **Identify the product** from the Product ID or description
+2. **Determine the assignment group** based on the product category
+3. **Create a ServiceNow incident** with appropriate urgency/impact
+4. **Send a Slack notification** to the support channel
+5. **Create a GitHub issue** (only if the prompt contains a stack trace or error code)
