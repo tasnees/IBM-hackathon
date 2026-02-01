@@ -2,6 +2,9 @@
 
 This repository contains the project work for the IBM Hackathon. We created a fictitious company called **TechNova Solutions** and built an AI-powered solution to address a critical operational challenge.
 
+TODO:
+- Fix call agent from custom frontend chatbox 
+
 ---
 
 ## Problem Statement
@@ -298,58 +301,115 @@ Once you've uploaded the OpenAPI spec and configured the API key in watsonx Orch
 
 ---
 
+### Adding the TechNova API Toolset to watsonx Orchestrate
+
+This section walks you through uploading the `openapi.json` file to watsonx Orchestrate and configuring the API key authentication.
+
 #### Step 1: Navigate to Your Agent's Toolset
 
-1. Go to [watsonx Orchestrate](https://dl.watson-orchestrate.ibm.com/build)
-2. Open your **TechNova Solutions** agent
-3. Click **Toolset** in the left sidebar
+1. Go to [watsonx Orchestrate](https://dl.watson-orchestrate.ibm.com/home)
+2. Click **AI assistant builder** in the left sidebar
+3. Open your **TechNova Solutions** agent (or create a new one)
+4. Click **Toolset** in the left sidebar
 
-#### Step 2: Add the OpenAPI Tool
+#### Step 2: Import the OpenAPI Specification
 
 1. Click **Add tool** (or the **+** button)
-2. Select **Import from OpenAPI**
-3. Click **Upload file** and select your `openapi.json` file
-4. Wait for the file to be parsed
+2. Select **From an OpenAPI specification file** under "Custom-built tool"
+3. Click **Browse** and select your `openapi.json` file from this repository
+4. Click **Next** to continue
 
-#### Step 3: Configure API Key Authentication
+#### Step 3: Select Tools to Import
 
-After the OpenAPI file is parsed, watsonx Orchestrate will detect the `ApiKeyAuth` security scheme:
+After the file is parsed, you'll see a list of available endpoints:
 
-1. You'll see a message indicating **"This API requires authentication"**
-2. Click **Configure authentication** (or the gear icon ⚙️)
-3. In the authentication dialog:
-   - **Authentication type**: Should show `API Key` (auto-detected)
-   - **Header name**: Should show `X-API-Key` (auto-detected from OpenAPI spec)
-   - **API Key value**: Enter your generated API key here
-4. Click **Save** or **Apply**
+| Name | Method | Description | Auth Type |
+|------|--------|-------------|-----------|
+| Health Check | GET | Health check endpoint | No Auth |
+| Get Support | POST | Creates incident & sends Slack notification | Api Key |
+| List Assignment Groups | GET | Get available assignment groups | Api Key |
+| List Categories | GET | Get available incident categories | Api Key |
+| List Impacts | GET | Get available impact values | Api Key |
+| List Urgencies | GET | Get available urgency values | Api Key |
 
-#### Step 4: Verify the Configuration
+**Select all the "Api Key" endpoints** (uncheck Health Check as it's optional):
+- ✅ Get Support
+- ✅ List Assignment Groups
+- ✅ List Categories
+- ✅ List Impacts
+- ✅ List Urgencies
 
-1. After saving, you should see a green checkmark ✓ next to the authentication status
-2. Click the **⋮** menu on any tool (e.g., "Get Support")
-3. Select **Test**
-4. Fill in sample values and click **Run**
-5. If authentication is correct, you'll get a successful response
+Click **Next** to continue.
 
-#### Troubleshooting Authentication Issues
+#### Step 4: Add New Connection
+
+1. Click **Add new connection**
+2. On the "Define connection details" screen:
+   - **Connection ID**: Auto-generated (e.g., `technova_support_api_20260201193133150`)
+   - **Display name**: `TechNova Support API`
+3. Click **Save and continue**
+
+#### Step 5: Configure Draft Connection
+
+This configures the connection for testing/draft environment:
+
+1. **Single sign-on (SSO)**: Leave **Off**
+2. **Authentication type**: Select **Api Key** from the dropdown
+3. **Server URL**: Should be auto-filled from the OpenAPI spec
+   - Example: `https://technova-api.25rfx7vtssv6.eu-gb.codeengine.appdomain.cloud`
+4. **API Key Location**: Select **header**
+5. **Credential type**: Select **Team credentials** (recommended for shared API key)
+6. Click **Next**
+
+#### Step 6: Configure Live Connection
+
+This configures the connection for the production/live environment:
+
+1. Click **Paste draft configuration** to copy settings from the draft connection
+2. **Credential type**: Select **Team credentials**
+3. Click **Finish**
+
+#### Step 7: Enter the API Key
+
+After finishing the connection wizard, you'll be prompted to enter your credentials:
+
+1. A dialog will appear asking for the API key
+2. **API Key**: Enter `mykey` (or your actual API key configured in Code Engine)
+3. Click **Connect** or **Save**
+
+> **Important:** Use the same API key value that's configured in your deployed API's environment variables (`API_KEY` secret in Code Engine or GitHub Actions).
+
+#### Step 8: Verify the Tools are Ready
+
+1. Return to the **Toolset** view
+2. You should see all imported tools listed with a green status indicator
+3. Test a tool by clicking the **⋮** menu → **Test**
+4. Example test for "List Urgencies":
+   - No input parameters required
+   - Click **Run**
+   - Expected response: List of urgency values (1-Critical, 2-High, 3-Medium, 4-Low)
+
+#### Troubleshooting Import Issues
 
 | Issue | Solution |
 |-------|----------|
-| "401 Unauthorized" error | Check that the API key is entered correctly (no extra spaces) |
-| "403 Forbidden" error | The API key doesn't match what's configured on the server |
-| Can't find authentication settings | Click the gear icon ⚙️ next to the toolset name |
-| Authentication not detected | Ensure your `openapi.json` has the `securitySchemes` section |
+| 401 error during import | Ensure your API is deployed with `API_KEY` set (not empty) |
+| "Invalid OpenAPI spec" error | Check that `openapi.json` uses version 3.0.3 (not 3.1.0) |
+| Tools not appearing | Refresh the page and check the toolset again |
+| "Connection failed" error | Verify the Server URL is correct and API is running |
+| Can't configure authentication | Make sure the OpenAPI spec has `securitySchemes` defined |
 
 #### Updating the API Key
 
 If you need to rotate or change the API key:
 
 1. Go to **Toolset** in your agent
-2. Click the gear icon ⚙️ next to the API tool
-3. Update the **API Key value** field
-4. Click **Save**
+2. Click the connection name (e.g., "TechNova Support API")
+3. Click **Edit connection**
+4. Update the **API Key** value
+5. Click **Save**
 
-> **Note:** After updating the API key in watsonx Orchestrate, make sure the same key is configured in your deployed API's environment variables (Code Engine secrets).
+> **Note:** After updating the API key in watsonx Orchestrate, make sure the same key is configured in your deployed API's environment variables (Code Engine secrets or GitHub Actions secrets).
 
 ### Testing API Key Authentication
 
@@ -823,6 +883,84 @@ In the **Channels** section, you can enable various communication channels:
 2. Review the deployment settings
 3. Confirm deployment
 4. Your agent is now live and accessible!
+
+---
+
+### Uploading Test Cases for Agent Evaluation
+
+watsonx Orchestrate allows you to upload test cases in CSV format to evaluate your agent's performance systematically. This is useful for:
+- Validating agent behavior across different scenarios
+- Regression testing after agent updates
+- Demonstrating agent capabilities
+
+#### CSV Format Requirements
+
+The CSV file **must** have two columns with these exact headers:
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| `Prompt` | ✅ Yes | The user input/question to test |
+| `answer` | ✅ Yes | The expected behavior or response |
+
+**Example CSV structure:**
+```csv
+Prompt,answer
+"Help! My VM is not starting. Product ID: CLOUD-001, Username: admin","Create ServiceNow incident assigned to CLOUD-L1-Support, send Slack notification to #cloud-support"
+"Password reset needed. Product ID: SEC-003, Username: user1","Create ServiceNow incident assigned to SEC-L1-Support, send Slack notification to #security-incidents"
+```
+
+#### Important CSV Formatting Rules
+
+1. **Headers are case-sensitive** - Use `Prompt` (capital P) and `answer` (lowercase a)
+2. **Wrap prompts in double quotes** - Especially if they contain commas, line breaks, or special characters
+3. **Escape internal quotes** - Use `""` for quotes within quoted strings
+4. **No trailing commas** - Each line should have exactly one comma separating the two columns
+5. **UTF-8 encoding** - Save the file with UTF-8 encoding
+
+#### How to Upload Test Cases
+
+1. **Navigate to Test Page**
+   - Go to your agent in watsonx Orchestrate
+   - Click the **Deploy** dropdown (⋮ menu) in the top right
+   - Select **Test**
+
+2. **Upload CSV File**
+   - Click **Upload tests** button
+   - Click **Browse** or drag and drop your CSV file
+   - The file must be under 5 MB
+
+3. **Review Imported Tests**
+   - After upload, you'll see all prompts listed in the Test cases table
+   - Each row shows the Prompt, Date created, and Last run status
+
+4. **Run Tests**
+   - Click **Run all** to execute all test cases
+   - Or select individual tests and run them one at a time
+   - Results will show in the **Evaluations** section below
+
+#### Pre-built Test Cases
+
+This repository includes comprehensive test cases covering all products and departments:
+
+| File | Location | Test Cases | Description |
+|------|----------|------------|-------------|
+| `agent_test_cases_comprehensive.csv` | `tests/test prompts/` | 88 | All products, all departments, various scenarios |
+
+**Coverage includes:**
+- ✅ All 80 products across 8 departments (CLOUD, DATA, SEC, COLLAB, FIN, DEV, ITSM, ERP)
+- ✅ Critical incidents with stack traces (triggers GitHub issue creation)
+- ✅ Standard support requests (ServiceNow + Slack only)
+- ✅ Access requests, license requests, feature requests, training questions
+
+#### Troubleshooting Test Upload Issues
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| "Missing required headers: answer" | CSV missing the `answer` column | Ensure CSV has both `Prompt` and `answer` headers |
+| "Missing required headers: Prompt" | CSV missing the `Prompt` column or wrong case | Use capital P: `Prompt` not `prompt` |
+| "Invalid CSV format" | Malformed CSV structure | Check for unescaped quotes or extra commas |
+| "File too large" | CSV exceeds 5 MB limit | Split into smaller files or reduce test cases |
+| Empty test cases shown | Encoding issue | Save file as UTF-8 without BOM |
 
 ---
 
