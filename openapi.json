@@ -11,12 +11,18 @@
       "description": "Production server on IBM Code Engine"
     }
   ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "paths": {
     "/health": {
       "get": {
         "summary": "Health Check",
         "description": "Health check endpoint.",
         "operationId": "health_check_health_get",
+        "security": [],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -34,6 +40,11 @@
         "summary": "Get Support",
         "description": "Create a support incident in ServiceNow and send a Slack notification.\n\nThis endpoint:\n1. Creates a new incident in ServiceNow with the provided details\n2. Sends a notification to the configured Slack channel\n3. Returns the incident details and status\n\nArgs:\n    request: SupportRequest containing incident details\n    \nReturns:\n    SupportResponse with incident number and status",
         "operationId": "get_support_get_support_post",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -51,6 +62,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SupportResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing API Key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Missing API Key. Include 'X-API-Key' header in your request."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid API Key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string",
+                      "example": "Invalid API Key"
+                    }
+                  }
                 }
               }
             }
@@ -73,6 +116,11 @@
         "summary": "List Assignment Groups",
         "description": "Get available ServiceNow assignment groups.\n\nReturns:\n    list: Available assignment groups",
         "operationId": "list_assignment_groups_assignment_groups_get",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -81,6 +129,12 @@
                 "schema": {}
               }
             }
+          },
+          "401": {
+            "description": "Missing API Key"
+          },
+          "403": {
+            "description": "Invalid API Key"
           }
         }
       }
@@ -90,6 +144,11 @@
         "summary": "List Categories",
         "description": "Get available incident categories.\n\nReturns:\n    list: Available incident categories",
         "operationId": "list_categories_categories_get",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -98,6 +157,12 @@
                 "schema": {}
               }
             }
+          },
+          "401": {
+            "description": "Missing API Key"
+          },
+          "403": {
+            "description": "Invalid API Key"
           }
         }
       }
@@ -107,6 +172,11 @@
         "summary": "List Impacts",
         "description": "Get available impact values.\n\nReturns:\n    list: Available impact values with labels",
         "operationId": "list_impacts_impacts_get",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -115,6 +185,12 @@
                 "schema": {}
               }
             }
+          },
+          "401": {
+            "description": "Missing API Key"
+          },
+          "403": {
+            "description": "Invalid API Key"
           }
         }
       }
@@ -124,6 +200,11 @@
         "summary": "List Urgencies",
         "description": "Get available urgency values.\n\nReturns:\n    list: Available urgency values with labels",
         "operationId": "list_urgencies_urgencies_get",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -132,6 +213,12 @@
                 "schema": {}
               }
             }
+          },
+          "401": {
+            "description": "Missing API Key"
+          },
+          "403": {
+            "description": "Invalid API Key"
           }
         }
       }
@@ -292,6 +379,14 @@
         "type": "object",
         "required": ["loc", "msg", "type"],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authenticating requests. Contact TechNova admin for access."
       }
     }
   }

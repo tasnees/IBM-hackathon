@@ -1,8 +1,11 @@
 """TechNova Support API - FastAPI Application."""
 
 import logging
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
+
+from typing import Optional
 
 from .config import get_settings, Settings
 from .models import SupportRequest, SupportResponse
@@ -23,6 +26,106 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# API Key Security
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_api_key(api_key: str = Security(api_key_header)) -> str:
+    """
+    Verify the API key provided in the X-API-Key header.
+    
+    Args:
+        api_key: The API key from the request header
+        
+    Returns:
+        The validated API key
+        
+    Raises:
+        HTTPException: If API key is missing or invalid
+    """
+    settings = get_settings()
+    
+    # If no API key is configured, allow all requests (development mode)
+    if not settings.api_key:
+        logger.warning("No API_KEY configured - API is running in open mode")
+        return "open-mode"
+    
+    if not api_key:
+        logger.warning("API request missing X-API-Key header")
+        raise HTTPException(
+            status_code=401,
+            detail="Missing API Key. Include 'X-API-Key' header in your request."
+        )
+    
+    if api_key != settings.api_key:
+        logger.warning("Invalid API key provided")
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid API Key"
+        )
+    
+    return api_key
+
+
+# Assignment Group to Slack Channel Mapping
+ASSIGNMENT_GROUP_SLACK_CHANNELS = {
+    # CLOUD - Cloud Infrastructure Services
+    "CLOUD": "#cloud-support",
+    
+    # DATA - Data & Analytics
+    "DATA": "#data-support",
+    
+    # SECURITY - Cybersecurity Operations
+    "SEC": "#security-incidents",
+    
+    # COLLAB - Collaboration & Productivity
+    "COLLAB": "#collab-support",
+    
+    # FINTECH - Financial Technology
+    "FIN": "#fintech-support",
+    
+    # DEVTOOLS - Developer Tools & Platforms
+    "DEVTOOLS": "#devtools-support",
+    "DEV": "#devtools-support",
+    
+    # ITSM - IT Service Management
+    "ITSM": "#itsm-support",
+    
+    # ERP - Enterprise Resource Planning
+    "ERP": "#erp-support",
+    
+    # IOT - IoT & Industrial
+    "IOT": "#iot-support",
+    
+    # General/Fallback
+    "GENERAL": "#general-support",
+}
+
+
+def get_slack_channel_for_assignment_group(assignment_group: str) -> Optional[str]:
+    """
+    Get the appropriate Slack channel for a given assignment group.
+    
+    Args:
+        assignment_group: The ServiceNow assignment group name (e.g., "CLOUD-L1-Support")
+        
+    Returns:
+        The Slack channel to use (e.g., "#cloud-support"), or None to use default
+    """
+    if not assignment_group:
+        return None
+    
+    # Extract the prefix from the assignment group (e.g., "CLOUD" from "CLOUD-L1-Support")
+    assignment_group_upper = assignment_group.upper()
+    
+    # Check each prefix
+    for prefix, channel in ASSIGNMENT_GROUP_SLACK_CHANNELS.items():
+        if assignment_group_upper.startswith(prefix):
+            return channel
+    
+    # Return None to use default channel from .env
+    return None
+
 # Initialize FastAPI app
 settings = get_settings()
 app = FastAPI(
@@ -36,6 +139,46 @@ app = FastAPI(
         }
     ]
 )
+
+# Define OpenAPI security scheme for documentation
+app.openapi_schema = None  # Reset to allow customization
+
+def custom_openapi():
+    """Generate custom OpenAPI schema with API key security."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    from fastapi.openapi.utils import get_openapi
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        servers=app.servers
+    )
+    
+    # Add security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key for authenticating requests. Contact TechNova admin for access."
+        }
+    }
+    
+    # Apply security globally to all endpoints except health
+    for path, methods in openapi_schema["paths"].items():
+        if path != "/health":
+            for method in methods.values():
+                if isinstance(method, dict):
+                    method["security"] = [{"ApiKeyAuth": []}]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 # Add CORS middleware
 app.add_middleware(
@@ -54,7 +197,10 @@ async def health_check():
 
 
 @app.post("/get_support", response_model=SupportResponse)
-async def get_support(request: SupportRequest) -> SupportResponse:
+async def get_support(
+    request: SupportRequest,
+    api_key: str = Depends(verify_api_key)
+) -> SupportResponse:
     """
     Create a support incident in ServiceNow and send a Slack notification.
     
@@ -84,8 +230,12 @@ async def get_support(request: SupportRequest) -> SupportResponse:
             error_details=snow_result["error_details"]
         )
     
-    # Step 2: Send Slack notification
+    # Step 2: Send Slack notification to the appropriate channel based on assignment group
+    slack_channel = get_slack_channel_for_assignment_group(request.assignment_group)
+    logger.info(f"Sending Slack notification to channel: {slack_channel or 'default'}")
+    
     slack_result = send_slack_message(
+        channel=slack_channel,
         incident_number=snow_result["incident_number"],
         short_description=request.short_description,
         description=request.description,
@@ -118,6 +268,7 @@ async def get_support(request: SupportRequest) -> SupportResponse:
         incident_number=snow_result["incident_number"],
         incident_sys_id=snow_result["incident_sys_id"],
         slack_message_sent=slack_result["success"],
+        slack_channel=slack_result.get("channel"),
         github_issue_created=github_result.get("issue_created", False),
         github_issue_url=github_result.get("issue_url"),
         github_issue_number=github_result.get("issue_number"),
@@ -126,7 +277,7 @@ async def get_support(request: SupportRequest) -> SupportResponse:
 
 
 @app.get("/assignment_groups")
-async def list_assignment_groups():
+async def list_assignment_groups(api_key: str = Depends(verify_api_key)):
     """
     Get available ServiceNow assignment groups.
     
@@ -138,7 +289,7 @@ async def list_assignment_groups():
 
 
 @app.get("/categories")
-async def list_categories():
+async def list_categories(api_key: str = Depends(verify_api_key)):
     """
     Get available incident categories.
     
@@ -150,7 +301,7 @@ async def list_categories():
 
 
 @app.get("/impacts")
-async def list_impacts():
+async def list_impacts(api_key: str = Depends(verify_api_key)):
     """
     Get available impact values.
     
@@ -162,7 +313,7 @@ async def list_impacts():
 
 
 @app.get("/urgencies")
-async def list_urgencies():
+async def list_urgencies(api_key: str = Depends(verify_api_key)):
     """
     Get available urgency values.
     
