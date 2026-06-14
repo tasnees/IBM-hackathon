@@ -1,5 +1,0 @@
-Our IoT sensors on the factory floor stopped reporting data about 3 hours ago. The dashboard shows the last reading at 11:42 AM and nothing after that. We have around 200 devices affected across Building A and B.
-
-Product ID: IOT-2024
-Username: iot.admin
-This is a medium priority issue but it's blocking our real-time monitoring.
